@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Order } from '@/data/liveOrders';
 import type { ScanResult } from '@/data/mockHelpers';
 import { INITIAL_ORDERS } from '@/data/liveOrders';
+import type { Lang } from '@/i18n/translations';
 
 export type ViewType = 'map' | 'simulation' | 'dashboard';
 export type CarType = 'sedan' | 'suv' | 'sports' | 'vinfast_vf8' | 'vinfast_vf9';
