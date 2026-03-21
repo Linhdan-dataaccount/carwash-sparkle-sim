@@ -117,7 +117,7 @@ function WashTunnel() {
       ))}
       <mesh position={[0, -0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[8, 8]} />
-        <meshStandardMaterial color="#0f172a" />
+        <meshStandardMaterial color="#1e293b" metalness={0.2} roughness={0.8} />
       </mesh>
     </group>
   );
@@ -321,9 +321,12 @@ export default function SimulationView() {
           </AnimatePresence>
 
           <Canvas camera={{ position: [6, 4, 6], fov: 50 }}>
-            <ambientLight intensity={0.4} />
-            <directionalLight position={[5, 8, 5]} intensity={0.8} />
-            <pointLight position={[-3, 2, 0]} intensity={0.3} color="#00d4ff" />
+            <ambientLight intensity={1.2} />
+            <directionalLight position={[5, 8, 5]} intensity={1.5} castShadow />
+            <directionalLight position={[-4, 6, -3]} intensity={0.6} color="#e2e8f0" />
+            <pointLight position={[-3, 2, 0]} intensity={0.6} color="#00d4ff" />
+            <pointLight position={[3, 3, -2]} intensity={0.4} color="#f0f0f0" />
+            <hemisphereLight args={['#cbd5e1', '#1e293b', 0.8]} />
             <Suspense fallback={null}>
               <WashTunnel />
               <CarModel carType={selectedCar} phase={simulationPhase} />
