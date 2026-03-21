@@ -5,12 +5,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/appStore';
 import { VETC_USER, TIERS } from '@/data/vetcUser';
 import { CAR_DATA, generateScanResult, WASH_STEPS_ICE, WASH_STEPS_EV } from '@/data/mockHelpers';
+import type { WashTier } from '@/data/mockHelpers';
 import { formatVND } from '@/utils/formatVND';
 import { playSound } from '@/utils/sounds';
 import { t } from '@/i18n/translations';
 import { JourneyBar } from '@/components/layout/JourneyBar';
 import { AutoPayWidget } from '@/components/simulation/AutoPayWidget';
 import * as THREE from 'three';
+import carVeryDirty from '@/assets/car-very-dirty.jpg';
+import carMediumDirty from '@/assets/car-medium-dirty.jpg';
+import carLightDirty from '@/assets/car-light-dirty.jpg';
 
 // 3D Car
 function CarModel({ carType, phase }: { carType: string; phase: string }) {
