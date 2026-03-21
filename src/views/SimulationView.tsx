@@ -481,8 +481,10 @@ export default function SimulationView() {
                 <motion.div key="results" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}>
                   <h3 className="font-heading font-semibold mb-3">{t('sim_results', lang)}</h3>
 
+                  {/* Causal VETC context */}
                   <div className="vetc-bar p-2.5 text-xs mb-3">
-                    🛣️ {t('sim_vetc_highway', lang, { km: VETC_USER.lastTrip.distanceKm.toLocaleString() })}
+                    <span className="font-semibold text-vetc-orange">📡 {lang === 'vi' ? 'Dữ liệu VETC:' : 'VETC data:'}</span>
+                    {' '}{t('vetc_cause_scan', lang, { km: VETC_USER.lastTrip.distanceKm.toLocaleString(), toll: VETC_USER.lastTrip.tollPasses })}
                   </div>
 
                   <div className="mb-3">
@@ -512,13 +514,16 @@ export default function SimulationView() {
                     </div>
                   )}
 
-                  <div className="glass p-3 mb-4">
+                  <div className="glass p-3 mb-3">
                     <div className="text-sm font-medium mb-1">{t('sim_recommend', lang)}: {scanResults.recommendation.name}</div>
                     <div className="text-xs text-muted-foreground">
                       {formatVND(scanResults.recommendation.priceRange[0])} – {formatVND(scanResults.recommendation.priceRange[1])}
                       {' · '}{scanResults.recommendation.mins[0]}–{scanResults.recommendation.mins[1]} {t('mins_unit', lang)}
                     </div>
                   </div>
+
+                  {/* Auto-pay widget */}
+                  <AutoPayWidget estimatedPrice={price} discountPct={discount} />
 
                   <motion.button
                     whileTap={{ scale: 0.97 }}
