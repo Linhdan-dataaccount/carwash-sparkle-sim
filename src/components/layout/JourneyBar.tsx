@@ -20,9 +20,13 @@ const JOURNEY_STEPS: JourneyStep[] = [
 export function JourneyBar() {
   const { simulationPhase, lang } = useAppStore();
 
-  const activeIdx = JOURNEY_STEPS.findLastIndex(
-    step => step.phases.includes(simulationPhase)
-  );
+  let activeIdx = 0;
+  for (let i = JOURNEY_STEPS.length - 1; i >= 0; i--) {
+    if (JOURNEY_STEPS[i].phases.includes(simulationPhase)) {
+      activeIdx = i;
+      break;
+    }
+  }
 
   return (
     <div className="mx-4 mt-3 px-4 py-2.5 glass rounded-xl">
