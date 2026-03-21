@@ -542,7 +542,7 @@ export default function SimulationView() {
 
               {/* WASHING */}
               {simulationPhase === 'washing' && (
-                <motion.div key="washing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <motion.div key="washing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-[200px]">
                   <h3 className="font-heading font-semibold mb-3">{t('sim_washing', lang)}</h3>
 
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-4">
