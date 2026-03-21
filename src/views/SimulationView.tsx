@@ -40,20 +40,20 @@ function CarModel({ carType, phase }: { carType: string; phase: string }) {
     <group ref={groupRef} position={[0, 0, phase === 'entering' ? 8 : 0]}>
       <mesh position={[0, bodySize[1] / 2, 0]}>
         <boxGeometry args={bodySize} />
-        <meshStandardMaterial color={bodyColor} metalness={0.6} roughness={0.3} />
+        <meshStandardMaterial color={bodyColor} metalness={0.85} roughness={0.15} envMapIntensity={1.5} />
       </mesh>
       <mesh position={roofPos}>
         <boxGeometry args={roofSize} />
-        <meshStandardMaterial color={bodyColor} metalness={0.6} roughness={0.3} />
+        <meshStandardMaterial color={bodyColor} metalness={0.85} roughness={0.15} envMapIntensity={1.5} />
       </mesh>
       <mesh position={[0, bodySize[1] * 0.85, 0]} scale={[0.98, 0.98, 0.98]}>
         <boxGeometry args={[roofSize[0] * 0.9, roofSize[1] * 0.8, roofSize[2] * 1.01]} />
-        <meshStandardMaterial color="#88aacc" transparent opacity={0.5} />
+        <meshStandardMaterial color="#aaccee" transparent opacity={0.45} metalness={0.3} roughness={0.05} envMapIntensity={2} />
       </mesh>
       {[[-1.4, 0.15, 1.1], [1.4, 0.15, 1.1], [-1.4, 0.15, -1.1], [1.4, 0.15, -1.1]].map((pos, i) => (
         <mesh key={i} position={pos as [number, number, number]} rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.35, 0.35, 0.25, 16]} />
-          <meshStandardMaterial color="#222" />
+          <meshStandardMaterial color="#333" metalness={0.6} roughness={0.4} />
         </mesh>
       ))}
       {isEV && <pointLight color="#22c55e" intensity={0.5} position={[0, -0.3, 0]} distance={3} />}
