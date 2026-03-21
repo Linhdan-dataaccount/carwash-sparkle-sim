@@ -68,6 +68,8 @@ let toastCounter = 0;
 export const useAppStore = create<AppState>((set) => ({
   activeView: 'map',
   setActiveView: (v) => set({ activeView: v }),
+  lang: 'vi',
+  setLang: (l) => set({ lang: l }),
 
   selectedStationId: null,
   setSelectedStation: (id) => set({ selectedStationId: id }),

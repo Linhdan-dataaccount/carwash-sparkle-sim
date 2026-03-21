@@ -192,7 +192,7 @@ export function t(
   lang: Lang,
   vars?: Record<string, string | number>,
 ): string {
-  let str = T[key]?.[lang] ?? T[key]?.['vi'] ?? key;
+  let str: string = T[key]?.[lang] ?? T[key]?.['vi'] ?? String(key);
   if (vars) {
     Object.entries(vars).forEach(([k, v]) => {
       str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
