@@ -203,15 +203,16 @@ export default function SimulationView() {
     }
     if (simulationPhase === 'scanning') {
       playSound('scan');
+      // Pre-generate results so zones show during analyzing
+      const result = generateScanResult(selectedCar, dirtLevel, isEV);
+      setScanResults(result);
       const timer = setTimeout(() => setSimulationPhase('analyzing'), 2500);
       return () => clearTimeout(timer);
     }
     if (simulationPhase === 'analyzing') {
-      const result = generateScanResult(selectedCar, dirtLevel, isEV);
       const timer = setTimeout(() => {
-        setScanResults(result);
         setSimulationPhase('results');
-      }, 1500);
+      }, 2500);
       return () => clearTimeout(timer);
     }
     if (simulationPhase === 'washing') {
