@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls, Environment } from '@react-three/drei';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/appStore';
 import { VETC_USER, TIERS } from '@/data/vetcUser';
