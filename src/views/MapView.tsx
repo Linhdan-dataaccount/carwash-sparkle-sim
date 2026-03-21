@@ -345,7 +345,7 @@ export default function MapView() {
                   eventHandlers={{ click: () => setSelectedStation(station.id) }}
                 >
                   <Popup>
-                    <div className="text-xs p-1" style={{ color: '#111', minWidth: 200 }}>
+                    <div className="text-xs p-1" style={{ color: '#111', minWidth: 220 }}>
                       <div className="font-bold text-sm mb-1">{station.name}</div>
                       <div className="mb-1">{station.address}</div>
                       <div className="flex gap-2 mb-1">
@@ -353,10 +353,20 @@ export default function MapView() {
                         <span>⭐ {station.rating}</span>
                       </div>
                       <div className="flex gap-1 mb-1">
-                        {station.evCertified && <span className="text-green-600">⚡ EV</span>}
-                        {station.mitsuiCert && <span className="text-blue-600">🏅 Mitsui</span>}
+                        {station.evCertified && <span style={{ color: '#16a34a' }}>⚡ EV</span>}
+                        {station.mitsuiCert && <span style={{ color: '#2563eb' }}>🏅 Mitsui</span>}
                       </div>
-                      <div>{formatVND(station.priceMin)} – {formatVND(station.priceMax)}</div>
+                      <div className="mb-2">{formatVND(station.priceMin)} – {formatVND(station.priceMax)}</div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setActiveView('simulation'); }}
+                        style={{
+                          width: '100%', padding: '6px 0', borderRadius: 8,
+                          background: '#0ea5e9', color: '#fff', border: 'none',
+                          fontWeight: 600, fontSize: 12, cursor: 'pointer',
+                        }}
+                      >
+                        🚗 {t('book_btn', lang)}
+                      </button>
                     </div>
                   </Popup>
                 </CircleMarker>

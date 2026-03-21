@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls, Environment } from '@react-three/drei';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/appStore';
 import { VETC_USER, TIERS } from '@/data/vetcUser';
@@ -40,20 +40,20 @@ function CarModel({ carType, phase }: { carType: string; phase: string }) {
     <group ref={groupRef} position={[0, 0, phase === 'entering' ? 8 : 0]}>
       <mesh position={[0, bodySize[1] / 2, 0]}>
         <boxGeometry args={bodySize} />
-        <meshStandardMaterial color={bodyColor} metalness={0.6} roughness={0.3} />
+        <meshStandardMaterial color={bodyColor} metalness={0.85} roughness={0.15} envMapIntensity={1.5} />
       </mesh>
       <mesh position={roofPos}>
         <boxGeometry args={roofSize} />
-        <meshStandardMaterial color={bodyColor} metalness={0.6} roughness={0.3} />
+        <meshStandardMaterial color={bodyColor} metalness={0.85} roughness={0.15} envMapIntensity={1.5} />
       </mesh>
       <mesh position={[0, bodySize[1] * 0.85, 0]} scale={[0.98, 0.98, 0.98]}>
         <boxGeometry args={[roofSize[0] * 0.9, roofSize[1] * 0.8, roofSize[2] * 1.01]} />
-        <meshStandardMaterial color="#88aacc" transparent opacity={0.5} />
+        <meshStandardMaterial color="#aaccee" transparent opacity={0.45} metalness={0.3} roughness={0.05} envMapIntensity={2} />
       </mesh>
       {[[-1.4, 0.15, 1.1], [1.4, 0.15, 1.1], [-1.4, 0.15, -1.1], [1.4, 0.15, -1.1]].map((pos, i) => (
         <mesh key={i} position={pos as [number, number, number]} rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.35, 0.35, 0.25, 16]} />
-          <meshStandardMaterial color="#222" />
+          <meshStandardMaterial color="#333" metalness={0.6} roughness={0.4} />
         </mesh>
       ))}
       {isEV && <pointLight color="#22c55e" intensity={0.5} position={[0, -0.3, 0]} distance={3} />}
@@ -117,7 +117,7 @@ function WashTunnel() {
       ))}
       <mesh position={[0, -0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[8, 8]} />
-        <meshStandardMaterial color="#1e293b" metalness={0.2} roughness={0.8} />
+        <meshStandardMaterial color="#334155" metalness={0.3} roughness={0.6} />
       </mesh>
     </group>
   );
@@ -321,12 +321,14 @@ export default function SimulationView() {
           </AnimatePresence>
 
           <Canvas camera={{ position: [6, 4, 6], fov: 50 }}>
-            <ambientLight intensity={1.2} />
-            <directionalLight position={[5, 8, 5]} intensity={1.5} castShadow />
-            <directionalLight position={[-4, 6, -3]} intensity={0.6} color="#e2e8f0" />
-            <pointLight position={[-3, 2, 0]} intensity={0.6} color="#00d4ff" />
-            <pointLight position={[3, 3, -2]} intensity={0.4} color="#f0f0f0" />
-            <hemisphereLight args={['#cbd5e1', '#1e293b', 0.8]} />
+            <ambientLight intensity={1.8} />
+            <directionalLight position={[5, 10, 5]} intensity={2.2} castShadow />
+            <directionalLight position={[-5, 6, -3]} intensity={1.0} color="#e2e8f0" />
+            <pointLight position={[-3, 3, 0]} intensity={0.8} color="#00d4ff" />
+            <pointLight position={[3, 4, -2]} intensity={0.6} color="#f8fafc" />
+            <pointLight position={[0, 5, 4]} intensity={0.5} color="#ffffff" />
+            <hemisphereLight args={['#e2e8f0', '#334155', 1.0]} />
+            <Environment preset="city" />
             <Suspense fallback={null}>
               <WashTunnel />
               <CarModel carType={selectedCar} phase={simulationPhase} />
