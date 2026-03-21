@@ -32,3 +32,10 @@ export const STATIONS: Station[] = [
   { id: 'sta-007', name: 'Tasco @ Suzuki Nhà Bè', address: '102 Huỳnh Tấn Phát, H. Nhà Bè', lat: 10.6929, lng: 106.7364, slots: 3, queue: 0, inProgress: 0, avgMins: 8, services: ['basic', 'premium', 'ev'], rating: 4.4, reviewCount: 33, priceMin: 50_000, priceMax: 200_000, hasLounge: true, hasWifi: true, open24h: false, evCertified: true, mitsuiCert: false, chemStock: 95, openHours: '07:30 – 21:00' },
   { id: 'sta-008', name: 'Tasco Express — Cần Giờ', address: 'KM18 Đường Rừng Sác, H. Cần Giờ', lat: 10.5521, lng: 106.9146, slots: 2, queue: 1, inProgress: 1, avgMins: 6, services: ['basic'], rating: 4.1, reviewCount: 18, priceMin: 50_000, priceMax: 80_000, hasLounge: false, hasWifi: false, open24h: true, evCertified: false, mitsuiCert: false, chemStock: 55, openHours: '24/7' },
 ];
+
+export const ENV_IMPACT = {
+  co2SavedKg: 0.8,
+  waterSavedLitres: 1_240,
+  idleMinsSaved: 47,
+  carsRouted: 31,
+};

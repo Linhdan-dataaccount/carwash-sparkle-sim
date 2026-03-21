@@ -7,6 +7,7 @@ import { VETC_USER, TIERS } from '@/data/vetcUser';
 import { CAR_DATA, generateScanResult, WASH_STEPS_ICE, WASH_STEPS_EV } from '@/data/mockHelpers';
 import { formatVND } from '@/utils/formatVND';
 import { playSound } from '@/utils/sounds';
+import { t } from '@/i18n/translations';
 import * as THREE from 'three';
 
 // 3D Car
@@ -35,29 +36,24 @@ function CarModel({ carType, phase }: { carType: string; phase: string }) {
 
   return (
     <group ref={groupRef} position={[0, 0, phase === 'entering' ? 8 : 0]}>
-      {/* Body */}
       <mesh position={[0, bodySize[1] / 2, 0]}>
         <boxGeometry args={bodySize} />
         <meshStandardMaterial color={bodyColor} metalness={0.6} roughness={0.3} />
       </mesh>
-      {/* Roof */}
       <mesh position={roofPos}>
         <boxGeometry args={roofSize} />
         <meshStandardMaterial color={bodyColor} metalness={0.6} roughness={0.3} />
       </mesh>
-      {/* Windows */}
       <mesh position={[0, bodySize[1] * 0.85, 0]} scale={[0.98, 0.98, 0.98]}>
         <boxGeometry args={[roofSize[0] * 0.9, roofSize[1] * 0.8, roofSize[2] * 1.01]} />
         <meshStandardMaterial color="#88aacc" transparent opacity={0.5} />
       </mesh>
-      {/* Wheels */}
       {[[-1.4, 0.15, 1.1], [1.4, 0.15, 1.1], [-1.4, 0.15, -1.1], [1.4, 0.15, -1.1]].map((pos, i) => (
         <mesh key={i} position={pos as [number, number, number]} rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.35, 0.35, 0.25, 16]} />
           <meshStandardMaterial color="#222" />
         </mesh>
       ))}
-      {/* EV underglow */}
       {isEV && <pointLight color="#22c55e" intensity={0.5} position={[0, -0.3, 0]} distance={3} />}
     </group>
   );
@@ -93,7 +89,6 @@ function ScanBeam({ active }: { active: boolean }) {
 function WashTunnel() {
   return (
     <group>
-      {/* Tunnel frame */}
       {[-2.5, 2.5].map((x) => (
         <mesh key={x} position={[0, 1.5, x]}>
           <boxGeometry args={[6, 0.1, 0.1]} />
@@ -112,14 +107,12 @@ function WashTunnel() {
           <meshStandardMaterial color="#334155" metalness={0.8} />
         </mesh>
       ))}
-      {/* Top bars */}
       {[-2.5, 0, 2.5].map((z) => (
         <mesh key={`t${z}`} position={[0, 3, z]}>
           <boxGeometry args={[6, 0.1, 0.1]} />
           <meshStandardMaterial color="#334155" metalness={0.8} />
         </mesh>
       ))}
-      {/* Floor */}
       <mesh position={[0, -0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[8, 8]} />
         <meshStandardMaterial color="#0f172a" />
@@ -128,13 +121,21 @@ function WashTunnel() {
   );
 }
 
-// Wash Progress Bar component
-function WashProgressBar({ steps, currentStep }: { steps: typeof WASH_STEPS_ICE; currentStep: number }) {
+function WashProgressBar({ steps, currentStep, lang }: { steps: typeof WASH_STEPS_ICE; currentStep: number; lang: 'vi' | 'en' }) {
+  // Bilingual step labels
+  const stepKeys: Record<string, 'step_soap' | 'step_rinse' | 'step_engine' | 'step_dry' | 'step_vacuum' | 'step_inspect' | 'step_ev_soap' | 'step_ev_rinse' | 'step_ev_port' | 'step_ev_inspect'> = {
+    'Phun bọt xà phòng': 'step_soap', 'Rửa áp lực cao': 'step_rinse', 'Rửa khoang máy': 'step_engine',
+    'Sấy khô': 'step_dry', 'Hút bụi nội thất': 'step_vacuum', 'Kiểm tra chất lượng': 'step_inspect',
+    'Phun bọt EV-Safe': 'step_ev_soap', 'Rửa áp lực thấp': 'step_ev_rinse',
+    'Kiểm tra cổng sạc': 'step_ev_port', 'Kiểm tra an toàn EV': 'step_ev_inspect',
+  };
+
   return (
     <div className="space-y-2">
       {steps.map((step, i) => {
         const isActive = i === currentStep;
         const isDone = i < currentStep;
+        const key = stepKeys[step.label];
         return (
           <motion.div
             key={i}
@@ -147,8 +148,16 @@ function WashProgressBar({ steps, currentStep }: { steps: typeof WASH_STEPS_ICE;
             }`}
           >
             <span className="text-lg">{step.icon}</span>
-            <span className="text-sm flex-1">{step.label}</span>
-            {isDone && <span className="text-tasco-green text-xs">✓</span>}
+            <span className="text-sm flex-1">{key ? t(key as any, lang) : step.label}</span>
+            {isDone && (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="text-tasco-green text-xs"
+              >
+                ✓
+              </motion.span>
+            )}
             {isActive && (
               <div className="w-4 h-4 border-2 border-tasco-blue border-t-transparent rounded-full animate-spin" />
             )}
@@ -163,32 +172,41 @@ export default function SimulationView() {
   const {
     selectedCar, setSelectedCar, simulationPhase, setSimulationPhase,
     washStep, setWashStep, scanResults, setScanResults,
-    dirtLevel, setDirtLevel, addToast, totalWashes, vetcPoints, addWash,
+    dirtLevel, setDirtLevel, addToast, totalWashes, vetcPoints, addWash, lang,
   } = useAppStore();
 
   const carData = CAR_DATA[selectedCar];
   const isEV = carData?.isEV || false;
   const steps = isEV ? WASH_STEPS_EV : WASH_STEPS_ICE;
 
+  const [sceneLoaded, setSceneLoaded] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+
+  // Scene loading skeleton
+  useEffect(() => {
+    const timer = setTimeout(() => setSceneLoaded(true), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Phase machine
   useEffect(() => {
     if (simulationPhase === 'entering') {
       playSound('move');
-      const t = setTimeout(() => setSimulationPhase('scanning'), 2000);
-      return () => clearTimeout(t);
+      const timer = setTimeout(() => setSimulationPhase('scanning'), 2000);
+      return () => clearTimeout(timer);
     }
     if (simulationPhase === 'scanning') {
       playSound('scan');
-      const t = setTimeout(() => setSimulationPhase('analyzing'), 2500);
-      return () => clearTimeout(t);
+      const timer = setTimeout(() => setSimulationPhase('analyzing'), 2500);
+      return () => clearTimeout(timer);
     }
     if (simulationPhase === 'analyzing') {
       const result = generateScanResult(selectedCar, dirtLevel, isEV);
-      const t = setTimeout(() => {
+      const timer = setTimeout(() => {
         setScanResults(result);
         setSimulationPhase('results');
       }, 1500);
-      return () => clearTimeout(t);
+      return () => clearTimeout(timer);
     }
     if (simulationPhase === 'washing') {
       setWashStep(0);
@@ -203,11 +221,15 @@ export default function SimulationView() {
       const total = steps.reduce((s, st) => s + st.durationMs, 0);
       timeouts.push(setTimeout(() => {
         playSound('complete');
-        setSimulationPhase('complete');
+        setShowCelebration(true);
+        setTimeout(() => {
+          setShowCelebration(false);
+          setSimulationPhase('complete');
+        }, 800);
         const price = scanResults?.recommendation.priceRange[0] || 150_000;
         const pts = Math.floor(price / 1000);
         addWash(pts);
-        addToast({ message: `✅ Rửa xe hoàn tất! +${pts} điểm VETC`, type: 'success' });
+        addToast({ message: t('toast_complete', lang, { pts }), type: 'success' });
       }, total + 1000));
       return () => timeouts.forEach(clearTimeout);
     }
@@ -248,7 +270,6 @@ export default function SimulationView() {
   useEffect(() => {
     if (simulationPhase === 'complete') {
       setShowReport(false);
-      // Check tier up
       const newTotal = totalWashes + 1;
       const nextTier = TIERS[VETC_USER.tier].next;
       const nextWashes = TIERS[VETC_USER.tier].washes;
@@ -267,16 +288,29 @@ export default function SimulationView() {
         <div className="flex items-center gap-3 text-sm">
           <span>🛣️</span>
           <span className="text-foreground">
-            {VETC_USER.lastTrip.route} · {VETC_USER.lastTrip.distanceKm.toLocaleString()}km · {VETC_USER.lastTrip.hoursAgo}h trước
+            {VETC_USER.lastTrip.route} · {VETC_USER.lastTrip.distanceKm.toLocaleString()}km · {VETC_USER.lastTrip.hoursAgo}h {t('vetc_ago', lang)}
           </span>
           {isEV && <span className="text-ev-green text-xs">⚡ EV-Safe Mode</span>}
-          <span className="font-mono text-vetc-orange ml-auto">Dự đoán bẩn: {dirtLevel}%</span>
+          <span className="font-mono text-vetc-orange ml-auto">{t('sim_dirt_pred', lang)}: {dirtLevel}%</span>
         </div>
       </div>
 
       <div className="flex-1 flex min-h-0 p-3 gap-3">
         {/* 3D Canvas */}
         <div className="flex-1 relative rounded-2xl overflow-hidden bg-card">
+          {/* Loading skeleton */}
+          <AnimatePresence>
+            {!sceneLoaded && (
+              <motion.div
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-card"
+              >
+                <div className="w-16 h-16 rounded-full bg-muted animate-pulse mb-4" />
+                <div className="text-sm text-muted-foreground">{t('loading_3d', lang)}</div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <Canvas camera={{ position: [6, 4, 6], fov: 50 }}>
             <ambientLight intensity={0.4} />
             <directionalLight position={[5, 8, 5]} intensity={0.8} />
@@ -305,9 +339,38 @@ export default function SimulationView() {
 
           {/* Queue widget */}
           <div className="absolute top-3 left-3 glass px-3 py-2 text-xs">
-            <div className="text-muted-foreground">Hàng chờ</div>
-            <div className="font-mono text-foreground">3 xe · ~12 phút</div>
+            <div className="text-muted-foreground">{t('sim_queue', lang)}</div>
+            <div className="font-mono text-foreground">{t('sim_queue_info', lang)}</div>
           </div>
+
+          {/* Celebration flash */}
+          <AnimatePresence>
+            {showCelebration && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm"
+              >
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', damping: 10 }}
+                  className="text-6xl mb-4"
+                >
+                  ✨
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="font-heading text-xl font-bold"
+                >
+                  {t('sim_complete', lang)}
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* EV check overlay */}
           <AnimatePresence>
@@ -319,26 +382,32 @@ export default function SimulationView() {
                 className="absolute inset-0 flex items-center justify-center bg-black/60 z-10"
               >
                 <div className="glass p-6 max-w-md mx-4">
-                  <h3 className="font-heading text-lg font-semibold mb-3">⚡ EV Safe Wash Protocol</h3>
-                  <p className="text-sm text-muted-foreground mb-3">Vehicle: {carData.label}</p>
+                  <h3 className="font-heading text-lg font-semibold mb-3">⚡ {t('sim_ev_title', lang)}</h3>
+                  <p className="text-sm text-muted-foreground mb-3">{t('rc_vehicle', lang)}: {carData.label}</p>
 
                   <div className="space-y-1.5 mb-4">
-                    <div className="text-xs text-tasco-red flex items-center gap-2">✗ Rửa khoang máy</div>
-                    <div className="text-xs text-tasco-red flex items-center gap-2">✗ Vòi áp lực cao gầm xe</div>
-                    <div className="text-xs text-tasco-green flex items-center gap-2">✓ Kiểm tra seal cổng sạc</div>
-                    <div className="text-xs text-tasco-green flex items-center gap-2">✓ Bọt xà phòng thân thiện EV</div>
-                    <div className="text-xs text-tasco-green flex items-center gap-2">✓ Kiểm tra độ khô sau rửa</div>
+                    <div className="text-xs text-tasco-red flex items-center gap-2">✗ {t('sim_ev_no_engine', lang)}</div>
+                    <div className="text-xs text-tasco-red flex items-center gap-2">✗ {t('sim_ev_no_pressure', lang)}</div>
+                    <div className="text-xs text-tasco-green flex items-center gap-2">✓ {t('sim_ev_seal', lang)}</div>
+                    <div className="text-xs text-tasco-green flex items-center gap-2">✓ {t('sim_ev_foam', lang)}</div>
+                    <div className="text-xs text-tasco-green flex items-center gap-2">✓ {t('sim_ev_dry', lang)}</div>
                   </div>
 
                   <div className="vetc-bar p-2 text-xs text-vetc-orange mb-4">
-                    ⚠️ Vui lòng đảm bảo cổng sạc đã đóng trước khi vào trạm
+                    ⚠️ {t('sim_ev_warn', lang)}
                   </div>
 
                   <div className="flex gap-2">
-                    <button onClick={() => setSimulationPhase('idle')} className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">Hủy</button>
-                    <button onClick={() => setSimulationPhase('entering')} className="px-4 py-2 text-sm bg-ev-green/20 text-ev-green rounded-lg hover:bg-ev-green/30 transition-colors flex-1">
-                      Xác nhận — Bắt đầu EV Wash →
+                    <button onClick={() => setSimulationPhase('idle')} className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      {t('sim_ev_cancel', lang)}
                     </button>
+                    <motion.button
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setSimulationPhase('entering')}
+                      className="px-4 py-2 text-sm bg-ev-green/20 text-ev-green rounded-lg hover:bg-ev-green/30 transition-colors flex-1"
+                    >
+                      {t('sim_ev_confirm', lang)}
+                    </motion.button>
                   </div>
                 </div>
               </motion.div>
@@ -353,11 +422,12 @@ export default function SimulationView() {
               {/* IDLE — Car Selector */}
               {simulationPhase === 'idle' && (
                 <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <h3 className="font-heading font-semibold mb-3">Chọn loại xe</h3>
+                  <h3 className="font-heading font-semibold mb-3">{t('sim_select_car', lang)}</h3>
                   <div className="grid grid-cols-2 gap-2 mb-4">
                     {Object.entries(CAR_DATA).map(([key, data]) => (
-                      <button
+                      <motion.button
                         key={key}
+                        whileTap={{ scale: 0.97 }}
                         onClick={() => handleSelectCar(key)}
                         className={`p-3 rounded-xl text-center transition-all border ${
                           selectedCar === key
@@ -370,18 +440,19 @@ export default function SimulationView() {
                         <div className="text-2xl mb-1">{data.icon}</div>
                         <div className="text-xs font-medium">{data.label}</div>
                         {data.isEV && <span className="text-[10px] text-ev-green">EV</span>}
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
                   <div className="text-xs text-muted-foreground mb-3">
-                    Mức bẩn: <span className="font-mono text-foreground">{dirtLevel}%</span>
+                    {t('sim_dirt_level', lang)}: <span className="font-mono text-foreground">{dirtLevel}%</span>
                   </div>
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
                     onClick={handleStart}
-                    className="w-full py-3 rounded-xl bg-tasco-blue/20 text-tasco-blue font-medium hover:bg-tasco-blue/30 transition-all active:scale-[0.97]"
+                    className="w-full py-3 rounded-xl bg-tasco-blue/20 text-tasco-blue font-medium hover:bg-tasco-blue/30 transition-all"
                   >
-                    {isEV ? '⚡ Bắt đầu EV Wash' : '🚗 Bắt đầu rửa xe'}
-                  </button>
+                    {isEV ? `⚡ ${t('sim_start_ev', lang)}` : `🚗 ${t('sim_start', lang)}`}
+                  </motion.button>
                 </motion.div>
               )}
 
@@ -390,8 +461,8 @@ export default function SimulationView() {
                 <motion.div key="progress" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center h-full">
                   <div className="w-12 h-12 border-2 border-tasco-blue border-t-transparent rounded-full animate-spin mb-4" />
                   <p className="text-sm text-muted-foreground">
-                    {simulationPhase === 'entering' ? 'Xe đang vào trạm...' :
-                     simulationPhase === 'scanning' ? 'Đang quét AI...' : 'Đang phân tích...'}
+                    {simulationPhase === 'entering' ? t('sim_entering', lang) :
+                     simulationPhase === 'scanning' ? t('sim_scanning', lang) : t('sim_analyzing', lang)}
                   </p>
                 </motion.div>
               )}
@@ -399,15 +470,15 @@ export default function SimulationView() {
               {/* RESULTS */}
               {simulationPhase === 'results' && scanResults && (
                 <motion.div key="results" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}>
-                  <h3 className="font-heading font-semibold mb-3">Kết quả quét AI</h3>
+                  <h3 className="font-heading font-semibold mb-3">{t('sim_results', lang)}</h3>
 
                   <div className="vetc-bar p-2.5 text-xs mb-3">
-                    🛣️ Phát hiện hành trình cao tốc ({VETC_USER.lastTrip.distanceKm.toLocaleString()}km) qua VETC → Khả năng cao bụi bẩn nặng
+                    🛣️ {t('sim_vetc_highway', lang, { km: VETC_USER.lastTrip.distanceKm.toLocaleString() })}
                   </div>
 
                   <div className="mb-3">
                     <div className="flex justify-between text-xs mb-1">
-                      <span>Mức bẩn</span>
+                      <span>{t('sim_dirt', lang)}</span>
                       <span className="font-mono">{scanResults.dirtLevel}%</span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -422,38 +493,39 @@ export default function SimulationView() {
 
                   <div className="text-xs flex items-center gap-2 mb-2">
                     <span>{scanResults.damage.severity === 'none' ? '✅' : '⚠️'}</span>
-                    <span>{scanResults.damage.label}</span>
+                    <span>{scanResults.damage.severity === 'none' ? t('no_damage', lang) :
+                           scanResults.damage.severity === 'light' ? t('light_scratch', lang) : t('heavy_dirt', lang)}</span>
                   </div>
 
                   {isEV && scanResults.chargingPort && (
                     <div className="text-xs flex items-center gap-2 mb-2 text-ev-green">
-                      ✅ Cổng sạc: Đã đóng
+                      ✅ {t('sim_port_closed', lang)}
                     </div>
                   )}
 
                   <div className="glass p-3 mb-4">
-                    <div className="text-sm font-medium mb-1">Đề xuất: {scanResults.recommendation.name}</div>
+                    <div className="text-sm font-medium mb-1">{t('sim_recommend', lang)}: {scanResults.recommendation.name}</div>
                     <div className="text-xs text-muted-foreground">
                       {formatVND(scanResults.recommendation.priceRange[0])} – {formatVND(scanResults.recommendation.priceRange[1])}
-                      {' · '}{scanResults.recommendation.mins[0]}–{scanResults.recommendation.mins[1]} phút
+                      {' · '}{scanResults.recommendation.mins[0]}–{scanResults.recommendation.mins[1]} {t('mins_unit', lang)}
                     </div>
                   </div>
 
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => setSimulationPhase('washing')}
-                    className="w-full py-3 rounded-xl bg-tasco-blue/20 text-tasco-blue font-medium hover:bg-tasco-blue/30 transition-all active:scale-[0.97]"
+                    className="w-full py-3 rounded-xl bg-tasco-blue/20 text-tasco-blue font-medium hover:bg-tasco-blue/30 transition-all"
                   >
-                    Tiến hành rửa xe →
-                  </button>
+                    {t('sim_proceed', lang)}
+                  </motion.button>
                 </motion.div>
               )}
 
               {/* WASHING */}
               {simulationPhase === 'washing' && (
                 <motion.div key="washing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <h3 className="font-heading font-semibold mb-3">Đang rửa xe...</h3>
+                  <h3 className="font-heading font-semibold mb-3">{t('sim_washing', lang)}</h3>
 
-                  {/* Overall progress */}
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-4">
                     <motion.div
                       className="h-full rounded-full bg-tasco-blue"
@@ -462,7 +534,7 @@ export default function SimulationView() {
                     />
                   </div>
 
-                  <WashProgressBar steps={steps} currentStep={washStep} />
+                  <WashProgressBar steps={steps} currentStep={washStep} lang={lang} />
                 </motion.div>
               )}
 
@@ -471,18 +543,18 @@ export default function SimulationView() {
                 <motion.div key="complete" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                   {!showReport ? (
                     <>
-                      <h3 className="font-heading font-semibold mb-3">✅ Báo cáo minh bạch</h3>
+                      <h3 className="font-heading font-semibold mb-3">✅ {t('tr_title', lang)}</h3>
 
                       <div className="space-y-3 mb-4">
                         <div>
-                          <div className="text-xs text-muted-foreground mb-1">Trước rửa</div>
+                          <div className="text-xs text-muted-foreground mb-1">{t('tr_before', lang)}</div>
                           <div className="h-3 bg-muted rounded-full overflow-hidden">
                             <motion.div initial={{ width: 0 }} animate={{ width: `${dirtLevel}%` }} transition={{ duration: 0.8 }} className="h-full bg-tasco-red rounded-full" />
                           </div>
                           <div className="text-xs font-mono text-right mt-0.5">{dirtLevel}%</div>
                         </div>
                         <div>
-                          <div className="text-xs text-muted-foreground mb-1">Sau rửa</div>
+                          <div className="text-xs text-muted-foreground mb-1">{t('tr_after', lang)}</div>
                           <div className="h-3 bg-muted rounded-full overflow-hidden">
                             <motion.div initial={{ width: 0 }} animate={{ width: `${afterDirt}%` }} transition={{ duration: 1, delay: 0.5 }} className="h-full bg-tasco-green rounded-full" />
                           </div>
@@ -491,46 +563,55 @@ export default function SimulationView() {
                       </div>
 
                       <div className="glass p-3 space-y-1.5 mb-4 text-xs">
-                        <div className="flex justify-between"><span className="text-muted-foreground">Nhân viên</span><span>Nguyễn Thị Lan (T-0042) ⭐ 4.9</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">Thời gian</span><span className="font-mono">11 phút 32 giây</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">Sản phẩm</span><span>EcoFoam Pro™, Tasco Wax Shield</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">Nước sử dụng</span><span className="font-mono">48 lít</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">{t('tr_staff', lang)}</span><span>Nguyễn Thị Lan (T-0042) ⭐ 4.9</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">{t('tr_duration', lang)}</span><span className="font-mono">11 {t('mins_unit', lang)} 32s</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">{t('tr_products', lang)}</span><span>EcoFoam Pro™, Tasco Wax Shield</span></div>
+                        {/* Water usage with eco framing */}
+                        <div className="flex justify-between items-start">
+                          <span className="text-muted-foreground">{t('tr_water', lang)}</span>
+                          <div className="text-right">
+                            <span className="font-mono">48L</span>
+                            <div className="text-[10px] text-ev-green flex items-center gap-1 justify-end mt-0.5">
+                              🌱 {t('tr_water_eco', lang)}
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="text-center text-xs text-tasco-green mb-4">✅ Đạt kiểm tra 12 điểm</div>
+                      <div className="text-center text-xs text-tasco-green mb-4">✅ {t('tr_seal', lang)}</div>
 
                       <div className="flex gap-2 mb-3">
-                        <button className="flex-1 py-2 rounded-lg bg-tasco-green/10 text-tasco-green text-sm hover:bg-tasco-green/20 transition-colors active:scale-[0.97]">👍 Hài lòng</button>
-                        <button className="flex-1 py-2 rounded-lg bg-muted text-muted-foreground text-sm hover:bg-muted/80 transition-colors active:scale-[0.97]">👎 Phản hồi</button>
+                        <motion.button whileTap={{ scale: 0.97 }} className="flex-1 py-2 rounded-lg bg-tasco-green/10 text-tasco-green text-sm hover:bg-tasco-green/20 transition-colors">👍 {t('tr_happy', lang)}</motion.button>
+                        <motion.button whileTap={{ scale: 0.97 }} className="flex-1 py-2 rounded-lg bg-muted text-muted-foreground text-sm hover:bg-muted/80 transition-colors">👎 {t('tr_issue', lang)}</motion.button>
                       </div>
 
                       <button onClick={() => setShowReport(true)} className="w-full text-xs text-tasco-blue hover:text-tasco-blue/80 transition-colors">
-                        Xem hóa đơn →
+                        {t('rc_view', lang)}
                       </button>
                     </>
                   ) : (
                     <>
-                      <h3 className="font-heading font-semibold mb-3">🧾 Hóa đơn</h3>
+                      <h3 className="font-heading font-semibold mb-3">🧾 {t('rc_title', lang)}</h3>
                       <div className="glass p-3 space-y-2 text-xs mb-4">
-                        <div className="flex justify-between"><span className="text-muted-foreground">Dịch vụ</span><span>{scanResults?.recommendation.name}</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">Xe</span><span>{carData.label} · {VETC_USER.plate}</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">Giá gốc</span><span className="font-mono">{formatVND(price)}</span></div>
-                        <div className="flex justify-between text-vetc-orange"><span>Giảm {VETC_USER.tier} ({discount}%)</span><span className="font-mono">-{formatVND(discountAmt)}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">{t('rc_service', lang)}</span><span>{scanResults?.recommendation.name}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">{t('rc_vehicle', lang)}</span><span>{carData.label} · {VETC_USER.plate}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">{t('rc_price', lang)}</span><span className="font-mono">{formatVND(price)}</span></div>
+                        <div className="flex justify-between text-vetc-orange"><span>{t('rc_discount', lang, { tier: VETC_USER.tier, pct: discount })}</span><span className="font-mono">-{formatVND(discountAmt)}</span></div>
                         <div className="border-t border-border pt-2 flex justify-between font-medium text-sm">
-                          <span>Tổng cộng</span><span className="font-mono">{formatVND(total)}</span>
+                          <span>{t('rc_total', lang)}</span><span className="font-mono">{formatVND(total)}</span>
                         </div>
-                        <div className="flex justify-between text-muted-foreground"><span>Thanh toán</span><span>VETC Wallet</span></div>
-                        <div className="flex justify-between text-muted-foreground"><span>Số dư sau</span><span className="font-mono">{formatVND(VETC_USER.walletBalance - total)}</span></div>
-                        <div className="flex justify-between text-tasco-green"><span>Điểm tích lũy</span><span className="font-mono">+{pointsEarned}</span></div>
+                        <div className="flex justify-between text-muted-foreground"><span>{t('rc_payment', lang)}</span><span>VETC Wallet</span></div>
+                        <div className="flex justify-between text-muted-foreground"><span>{t('rc_balance', lang)}</span><span className="font-mono">{formatVND(VETC_USER.walletBalance - total)}</span></div>
+                        <div className="flex justify-between text-tasco-green"><span>{t('rc_points', lang)}</span><span className="font-mono">+{pointsEarned}</span></div>
                       </div>
 
                       <div className="flex gap-2 mb-3">
-                        <button onClick={() => addToast({ message: 'Đang tải PDF...', type: 'info' })} className="flex-1 py-2 rounded-lg bg-muted text-xs hover:bg-muted/80 transition-colors active:scale-[0.97]">📥 Tải PDF</button>
-                        <button onClick={() => addToast({ message: 'Đã sao chép link!', type: 'success' })} className="flex-1 py-2 rounded-lg bg-muted text-xs hover:bg-muted/80 transition-colors active:scale-[0.97]">↗ Chia sẻ</button>
+                        <motion.button whileTap={{ scale: 0.97 }} onClick={() => addToast({ message: t('toast_pdf', lang), type: 'info' })} className="flex-1 py-2 rounded-lg bg-muted text-xs hover:bg-muted/80 transition-colors">📥 {t('rc_download', lang)}</motion.button>
+                        <motion.button whileTap={{ scale: 0.97 }} onClick={() => addToast({ message: t('toast_copied', lang), type: 'success' })} className="flex-1 py-2 rounded-lg bg-muted text-xs hover:bg-muted/80 transition-colors">↗ {t('rc_share', lang)}</motion.button>
                       </div>
-                      <button onClick={handleReset} className="w-full py-2.5 rounded-xl bg-tasco-blue/20 text-tasco-blue text-sm font-medium hover:bg-tasco-blue/30 transition-all active:scale-[0.97]">
-                        🔁 Rửa lại
-                      </button>
+                      <motion.button whileTap={{ scale: 0.97 }} onClick={handleReset} className="w-full py-2.5 rounded-xl bg-tasco-blue/20 text-tasco-blue text-sm font-medium hover:bg-tasco-blue/30 transition-all">
+                        🔁 {t('rc_again', lang)}
+                      </motion.button>
                     </>
                   )}
                 </motion.div>
@@ -548,8 +629,8 @@ export default function SimulationView() {
                 {VETC_USER.tier[0]}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium">{VETC_USER.tier} · <span className="font-mono">{vetcPoints.toLocaleString()} điểm</span></div>
-                <div className="text-[10px] text-muted-foreground">🔥 {VETC_USER.streak} tháng liên tiếp</div>
+                <div className="text-xs font-medium">{VETC_USER.tier} · <span className="font-mono">{vetcPoints.toLocaleString()} {t('loyalty_points', lang)}</span></div>
+                <div className="text-[10px] text-muted-foreground">🔥 {VETC_USER.streak} {t('loyalty_streak', lang)}</div>
               </div>
             </div>
             {TIERS[VETC_USER.tier].next && TIERS[VETC_USER.tier].washes && (
@@ -564,7 +645,7 @@ export default function SimulationView() {
                   />
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-0.5">
-                  Còn {(TIERS[VETC_USER.tier].washes || 0) - totalWashes} lần đến {TIERS[VETC_USER.tier].next}
+                  {t('loyalty_to_next', lang, { n: (TIERS[VETC_USER.tier].washes || 0) - totalWashes, tier: TIERS[VETC_USER.tier].next || '' })}
                 </div>
               </div>
             )}

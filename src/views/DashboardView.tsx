@@ -6,7 +6,10 @@ import { CHEMICALS } from '@/data/inventory';
 import { REVIEWS } from '@/data/reviews';
 import { generateOrder } from '@/data/liveOrders';
 import { KPI_DATA, REVENUE_DATA, QUALITY_DATA, VETC_TRANSACTIONS } from '@/data/mockHelpers';
+import { ENV_IMPACT } from '@/data/stations';
 import { formatVND } from '@/utils/formatVND';
+import { t } from '@/i18n/translations';
+import { ImpactPanel } from '@/components/dashboard/ImpactPanel';
 
 function useCountUp(target: number, duration = 1200) {
   const [value, setValue] = useState(0);
@@ -23,11 +26,19 @@ function useCountUp(target: number, duration = 1200) {
   return value;
 }
 
-function KPICard({ kpi, delay }: { kpi: typeof KPI_DATA[0]; delay: number }) {
+function KPICard({ kpi, delay, lang }: { kpi: typeof KPI_DATA[0]; delay: number; lang: 'vi' | 'en' }) {
   const displayValue = useCountUp(kpi.value);
   const formatted = kpi.format === 'vnd' ? formatVND(displayValue) :
     kpi.format === 'rating' ? `⭐ ${(displayValue / 10).toFixed(1)}` :
-    kpi.format === 'cars' ? `${displayValue} xe` : String(displayValue);
+    kpi.format === 'cars' ? `${displayValue} ${lang === 'vi' ? 'xe' : 'cars'}` : String(displayValue);
+
+  const labelKeys: Record<string, keyof typeof import('@/i18n/translations').T> = {
+    'Doanh thu hôm nay': 'kpi_revenue',
+    'Xe đã rửa': 'kpi_washed',
+    'Đánh giá TB': 'kpi_rating',
+    'Hàng chờ hiện tại': 'kpi_queue',
+    'Doanh thu VETC': 'kpi_vetc',
+  };
 
   return (
     <motion.div
@@ -36,7 +47,7 @@ function KPICard({ kpi, delay }: { kpi: typeof KPI_DATA[0]; delay: number }) {
       transition={{ delay: delay * 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       className={`glass p-4 flex-1 min-w-[160px] ${(kpi as any).accent ? 'border-l-[3px] border-l-vetc-orange' : ''}`}
     >
-      <div className="text-xs text-muted-foreground mb-1">{kpi.label}</div>
+      <div className="text-xs text-muted-foreground mb-1" aria-live="polite">{labelKeys[kpi.label] ? t(labelKeys[kpi.label], lang) : kpi.label}</div>
       <div className="text-xl font-heading font-bold font-mono">{formatted}</div>
       {kpi.delta && (
         <div className={`text-xs mt-1 ${kpi.deltaDir === 'up' ? 'text-tasco-green' : 'text-muted-foreground'}`}>
@@ -63,17 +74,32 @@ function VNDTooltip({ active, payload, label }: any) {
   );
 }
 
-const SECTIONS: { id: DashSection; label: string; icon: string }[] = [
-  { id: 'overview', label: 'Tổng quan', icon: '📊' },
-  { id: 'orders', label: 'Đơn hàng', icon: '📋' },
-  { id: 'inventory', label: 'Kho', icon: '🧪' },
-  { id: 'quality', label: 'Chất lượng', icon: '🏅' },
-  { id: 'vetc', label: 'VETC', icon: '💳' },
+type ExtDashSection = DashSection | 'impact';
+
+const SECTION_KEYS: { id: ExtDashSection; labelKey: keyof typeof import('@/i18n/translations').T; icon: string }[] = [
+  { id: 'overview', labelKey: 'dash_overview', icon: '📊' },
+  { id: 'orders', labelKey: 'dash_orders', icon: '📋' },
+  { id: 'inventory', labelKey: 'dash_inventory', icon: '🧪' },
+  { id: 'quality', labelKey: 'dash_quality', icon: '🏅' },
+  { id: 'vetc', labelKey: 'dash_vetc', icon: '💳' },
+  { id: 'impact', labelKey: 'dash_impact', icon: '🌱' },
 ];
 
 export default function DashboardView() {
-  const { dashboardSection, setDashboardSection, orders, setOrders, addToast } = useAppStore();
+  const { dashboardSection, setDashboardSection, orders, setOrders, addToast, lang } = useAppStore();
   const [vetcTxns, setVetcTxns] = useState(VETC_TRANSACTIONS);
+  const [activeSection, setActiveSection] = useState<ExtDashSection>(dashboardSection);
+
+  // Sync with store for non-impact sections
+  useEffect(() => {
+    if (activeSection !== 'impact') {
+      setDashboardSection(activeSection as DashSection);
+    }
+  }, [activeSection, setDashboardSection]);
+
+  useEffect(() => {
+    setActiveSection(dashboardSection);
+  }, [dashboardSection]);
 
   // Live orders rotation
   useEffect(() => {
@@ -113,13 +139,12 @@ export default function DashboardView() {
     if (low.length > 0) {
       const c = low[Math.floor(Math.random() * low.length)];
       const timer = setTimeout(() => {
-        addToast({ message: `⚠️ Tân Bình: ${c.name} còn ${Math.round((c.current / c.max) * 100)}% — cần đặt hàng`, type: 'warning' });
+        addToast({ message: `⚠️ ${c.name} ${lang === 'vi' ? 'còn' : 'at'} ${Math.round((c.current / c.max) * 100)}%`, type: 'warning' });
       }, 8000);
       return () => clearTimeout(timer);
     }
-  }, [addToast]);
+  }, [addToast, lang]);
 
-  // Rush forecast data
   const rushData = useMemo(() => {
     return Array.from({ length: 24 }, (_, i) => ({
       hour: `${i.toString().padStart(2, '0')}:00`,
@@ -129,21 +154,24 @@ export default function DashboardView() {
     }));
   }, []);
 
+  const co2Count = useCountUp(Math.round(ENV_IMPACT.co2SavedKg * 100));
+
   return (
     <div className="h-full flex">
       {/* Sidebar */}
       <div className="w-16 hover:w-[200px] transition-all duration-300 overflow-hidden bg-card/50 border-r border-border group shrink-0">
         <div className="py-4 space-y-1">
-          {SECTIONS.map((sec) => (
+          {SECTION_KEYS.map((sec) => (
             <button
               key={sec.id}
-              onClick={() => setDashboardSection(sec.id)}
+              onClick={() => setActiveSection(sec.id)}
               className={`w-full flex items-center gap-3 px-5 py-2.5 text-left transition-all ${
-                dashboardSection === sec.id ? 'text-tasco-blue bg-tasco-blue/5' : 'text-muted-foreground hover:text-foreground'
+                activeSection === sec.id ? 'text-tasco-blue bg-tasco-blue/5' : 'text-muted-foreground hover:text-foreground'
               }`}
+              aria-label={t(sec.labelKey, lang)}
             >
               <span className="text-lg shrink-0">{sec.icon}</span>
-              <span className="text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">{sec.label}</span>
+              <span className="text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">{t(sec.labelKey, lang)}</span>
             </button>
           ))}
         </div>
@@ -153,25 +181,38 @@ export default function DashboardView() {
       <div className="flex-1 overflow-y-auto p-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-heading text-lg font-semibold">{SECTIONS.find((s) => s.id === dashboardSection)?.label}</h2>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="w-2 h-2 rounded-full bg-tasco-green animate-pulse" />
-            Live · Hôm nay
+          <h2 className="font-heading text-lg font-semibold">{t(SECTION_KEYS.find((s) => s.id === activeSection)?.labelKey || 'dash_overview', lang)}</h2>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
+            <span className="w-2 h-2 rounded-full bg-tasco-green" style={{ animation: 'pulse-dot 2s ease-in-out infinite' }} />
+            {t('dash_live', lang)}
           </div>
         </div>
 
         <AnimatePresence mode="wait">
           {/* OVERVIEW */}
-          {dashboardSection === 'overview' && (
+          {activeSection === 'overview' && (
             <motion.div key="overview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               {/* KPI Cards */}
               <div className="flex gap-3 mb-4 flex-wrap">
-                {KPI_DATA.map((kpi, i) => <KPICard key={kpi.label} kpi={kpi} delay={i} />)}
+                {KPI_DATA.map((kpi, i) => <KPICard key={kpi.label} kpi={kpi} delay={i} lang={lang} />)}
+                {/* CO₂ KPI Card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: KPI_DATA.length * 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="glass p-4 flex-1 min-w-[160px] border-l-[3px] border-l-ev-green"
+                >
+                  <div className="text-xs text-muted-foreground mb-1">{t('kpi_co2', lang)}</div>
+                  <div className="text-xl font-heading font-bold font-mono text-ev-green">
+                    🌱 {(co2Count / 100).toFixed(1)} <span className="text-xs font-normal">kg</span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-1">{t('kpi_co2_sub', lang)}</div>
+                </motion.div>
               </div>
 
               {/* Revenue Chart */}
               <div className="glass p-4 mb-4">
-                <h3 className="text-sm font-heading font-semibold mb-3">Doanh thu theo giờ</h3>
+                <h3 className="text-sm font-heading font-semibold mb-3">{t('dash_hourly_rev', lang)}</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <AreaChart data={REVENUE_DATA}>
                     <defs>
@@ -201,9 +242,8 @@ export default function DashboardView() {
 
               {/* Two columns */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Recent orders */}
                 <div className="glass p-4">
-                  <h3 className="text-sm font-heading font-semibold mb-3">Đơn hàng gần đây</h3>
+                  <h3 className="text-sm font-heading font-semibold mb-3">{t('dash_recent_orders', lang)}</h3>
                   <div className="space-y-1.5 max-h-[240px] overflow-y-auto">
                     {orders.slice(0, 6).map((o) => (
                       <motion.div
@@ -216,18 +256,23 @@ export default function DashboardView() {
                         <span className="font-mono text-muted-foreground w-20 shrink-0">{o.plate}</span>
                         <span className="flex-1 truncate">{o.car}</span>
                         <span className="font-mono w-20 text-right">{formatVND(o.price)}</span>
-                        <span className={`w-2 h-2 rounded-full shrink-0 ${
-                          o.status === 'complete' ? 'bg-tasco-green' :
-                          o.status === 'in_progress' ? 'bg-tasco-yellow animate-pulse' : 'bg-muted-foreground'
-                        }`} />
+                        <span className="flex items-center gap-1">
+                          <span className={`w-2 h-2 rounded-full shrink-0 ${
+                            o.status === 'complete' ? 'bg-tasco-green' :
+                            o.status === 'in_progress' ? 'bg-tasco-yellow animate-pulse' : 'bg-muted-foreground'
+                          }`} />
+                          <span className="text-[10px] text-muted-foreground">
+                            {o.status === 'complete' ? t('status_complete', lang) :
+                             o.status === 'in_progress' ? t('status_progress', lang) : t('status_queued', lang)}
+                          </span>
+                        </span>
                       </motion.div>
                     ))}
                   </div>
                 </div>
 
-                {/* Reviews */}
                 <div className="glass p-4">
-                  <h3 className="text-sm font-heading font-semibold mb-3">Đánh giá gần đây</h3>
+                  <h3 className="text-sm font-heading font-semibold mb-3">{t('dash_recent_reviews', lang)}</h3>
                   <div className="space-y-2 max-h-[240px] overflow-y-auto">
                     {REVIEWS.map((r, i) => (
                       <motion.div
@@ -255,12 +300,12 @@ export default function DashboardView() {
           )}
 
           {/* ORDERS */}
-          {dashboardSection === 'orders' && (
+          {activeSection === 'orders' && (
             <motion.div key="orders" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <div className="glass p-4">
                 <div className="space-y-1">
                   <div className="grid grid-cols-7 gap-2 text-xs text-muted-foreground px-2 pb-2 border-b border-border">
-                    <span>Biển số</span><span>Xe</span><span>Dịch vụ</span><span>Giá</span><span>Thanh toán</span><span>Trạm</span><span>Trạng thái</span>
+                    <span>{t('col_plate', lang)}</span><span>{t('col_car', lang)}</span><span>{t('col_service', lang)}</span><span>{t('col_price', lang)}</span><span>{t('col_payment', lang)}</span><span>{t('col_station', lang)}</span><span>{t('col_status', lang)}</span>
                   </div>
                   <AnimatePresence>
                     {orders.map((o) => (
@@ -282,7 +327,7 @@ export default function DashboardView() {
                             o.status === 'complete' ? 'bg-tasco-green' :
                             o.status === 'in_progress' ? 'bg-tasco-yellow animate-pulse' : 'bg-muted-foreground'
                           }`} />
-                          {o.status === 'complete' ? 'Xong' : o.status === 'in_progress' ? 'Đang rửa' : 'Chờ'}
+                          {o.status === 'complete' ? t('status_complete', lang) : o.status === 'in_progress' ? t('status_progress', lang) : t('status_queued', lang)}
                         </span>
                       </motion.div>
                     ))}
@@ -293,10 +338,10 @@ export default function DashboardView() {
           )}
 
           {/* INVENTORY */}
-          {dashboardSection === 'inventory' && (
+          {activeSection === 'inventory' && (
             <motion.div key="inventory" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <div className="glass p-4 mb-4">
-                <h3 className="text-sm font-heading font-semibold mb-3">Tồn kho hóa chất</h3>
+                <h3 className="text-sm font-heading font-semibold mb-3">{t('dash_stock', lang)}</h3>
                 <div className="space-y-3">
                   {CHEMICALS.map((c, i) => {
                     const pct = (c.current / c.max) * 100;
@@ -315,7 +360,7 @@ export default function DashboardView() {
                           <span className="font-medium">{c.name}</span>
                           <div className="flex items-center gap-2">
                             <span className="font-mono text-muted-foreground">{c.current}{c.unit} / {c.max}{c.unit}</span>
-                            {isUrgent && <span className="text-[10px] bg-tasco-red/20 text-tasco-red px-1.5 py-0.5 rounded">⚠️ Đặt hàng ngay</span>}
+                            {isUrgent && <span className="text-[10px] bg-tasco-red/20 text-tasco-red px-1.5 py-0.5 rounded">⚠️ {t('inv_reorder', lang)}</span>}
                           </div>
                         </div>
                         <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -326,7 +371,7 @@ export default function DashboardView() {
                             className={`h-full rounded-full ${isLow ? 'bg-tasco-red' : pct < 50 ? 'bg-tasco-yellow' : 'bg-tasco-green'}`}
                           />
                         </div>
-                        <div className="text-[10px] text-muted-foreground mt-1">~{daysLeft} ngày còn lại</div>
+                        <div className="text-[10px] text-muted-foreground mt-1">{t('inv_days', lang, { n: daysLeft })}</div>
                       </motion.div>
                     );
                   })}
@@ -335,7 +380,7 @@ export default function DashboardView() {
 
               {/* Rush Forecast */}
               <div className="glass p-4">
-                <h3 className="text-sm font-heading font-semibold mb-3">Dự báo nhu cầu 24h</h3>
+                <h3 className="text-sm font-heading font-semibold mb-3">{t('dash_forecast', lang)}</h3>
                 <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={rushData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -348,29 +393,29 @@ export default function DashboardView() {
                   </BarChart>
                 </ResponsiveContainer>
                 <div className="vetc-bar p-2 text-xs mt-3">
-                  💡 Đề xuất tự động: Đặt 20L Foam Shampoo trước 18:00 thứ 5
+                  {t('dash_forecast_tip', lang)}
                 </div>
               </div>
             </motion.div>
           )}
 
           {/* QUALITY */}
-          {dashboardSection === 'quality' && (
+          {activeSection === 'quality' && (
             <motion.div key="quality" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <div className="glass p-4">
-                <h3 className="text-sm font-heading font-semibold mb-3">Bảng xếp hạng chất lượng</h3>
+                <h3 className="text-sm font-heading font-semibold mb-3">{t('leaderboard_title', lang)}</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="text-muted-foreground border-b border-border">
                         <th className="text-left py-2 px-2">#</th>
-                        <th className="text-left py-2 px-2">Trạm</th>
-                        <th className="text-center py-2 px-2">Điểm</th>
-                        <th className="text-center py-2 px-2">Rating</th>
-                        <th className="text-center py-2 px-2">SLA</th>
-                        <th className="text-center py-2 px-2">Hóa chất</th>
-                        <th className="text-center py-2 px-2">Sự cố</th>
-                        <th className="text-center py-2 px-2">Mitsui</th>
+                        <th className="text-left py-2 px-2">{t('col_name', lang)}</th>
+                        <th className="text-center py-2 px-2">{t('col_score', lang)}</th>
+                        <th className="text-center py-2 px-2">{t('col_rating', lang)}</th>
+                        <th className="text-center py-2 px-2">{t('col_sla', lang)}</th>
+                        <th className="text-center py-2 px-2">{t('col_chem', lang)}</th>
+                        <th className="text-center py-2 px-2">{t('col_issues', lang)}</th>
+                        <th className="text-center py-2 px-2">{t('col_mitsui', lang)}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -398,30 +443,28 @@ export default function DashboardView() {
                   </table>
                 </div>
                 <div className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border">
-                  Tiêu chuẩn Mitsui: {QUALITY_DATA.filter((r) => r.mitsui).length} / {QUALITY_DATA.length} trạm đạt chuẩn
+                  {t('mitsui_footer', lang, { n: QUALITY_DATA.filter((r) => r.mitsui).length, total: QUALITY_DATA.length })}
                 </div>
               </div>
             </motion.div>
           )}
 
           {/* VETC */}
-          {dashboardSection === 'vetc' && (
+          {activeSection === 'vetc' && (
             <motion.div key="vetc" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              {/* Summary */}
               <div className="glass p-4 mb-4 vetc-bar">
                 <div className="flex items-center justify-between flex-wrap gap-2 text-sm">
-                  <span>Tổng doanh thu VETC: <span className="font-mono font-bold">{formatVND(8_200_000)}</span></span>
-                  <span>54 / 89 giao dịch (61%)</span>
-                  <span className="text-tasco-green font-mono">+12.450 điểm phân phối</span>
+                  <span>{t('dash_vetc_total', lang)}: <span className="font-mono font-bold">{formatVND(8_200_000)}</span></span>
+                  <span>54 / 89 {lang === 'vi' ? 'giao dịch' : 'transactions'} (61%)</span>
+                  <span className="text-tasco-green font-mono">+12.450 {lang === 'vi' ? 'điểm phân phối' : 'distribution points'}</span>
                 </div>
               </div>
 
-              {/* Transactions */}
               <div className="glass p-4">
-                <h3 className="text-sm font-heading font-semibold mb-3">Giao dịch VETC</h3>
+                <h3 className="text-sm font-heading font-semibold mb-3">{t('dash_vetc_txns', lang)}</h3>
                 <div className="space-y-1">
                   <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground px-2 pb-2 border-b border-border">
-                    <span>Biển số</span><span>Dịch vụ</span><span>Số tiền</span><span>Thời gian</span>
+                    <span>{t('col_plate', lang)}</span><span>{t('col_service', lang)}</span><span>{t('col_amount', lang)}</span><span>{t('col_time', lang)}</span>
                   </div>
                   <AnimatePresence>
                     {vetcTxns.map((tx, i) => (
@@ -442,6 +485,9 @@ export default function DashboardView() {
               </div>
             </motion.div>
           )}
+
+          {/* IMPACT */}
+          {activeSection === 'impact' && <ImpactPanel key="impact" />}
         </AnimatePresence>
       </div>
     </div>

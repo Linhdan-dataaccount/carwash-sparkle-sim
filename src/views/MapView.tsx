@@ -6,6 +6,7 @@ import { STATIONS } from '@/data/stations';
 import { VETC_USER } from '@/data/vetcUser';
 import { markerColor, makePrediction } from '@/data/mockHelpers';
 import { formatVND } from '@/utils/formatVND';
+import { t } from '@/i18n/translations';
 import 'leaflet/dist/leaflet.css';
 
 function MapUpdater({ center }: { center: [number, number] }) {
@@ -15,6 +16,7 @@ function MapUpdater({ center }: { center: [number, number] }) {
 }
 
 function PredictionSparkline({ data }: { data: number[] }) {
+  const lang = useAppStore((s) => s.lang);
   const max = Math.max(...data, 1);
   const points = data.map((v, i) => `${(i / (data.length - 1)) * 160},${40 - (v / max) * 36}`).join(' ');
   const trend = data[data.length - 1] - data[0];
@@ -25,7 +27,7 @@ function PredictionSparkline({ data }: { data: number[] }) {
         <polyline points={points} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" />
       </svg>
       <div className="text-xs mt-0.5" style={{ color }}>
-        {trend < 0 ? 'Đang giảm ✓' : trend > 0 ? 'Đang tăng ⚠' : 'Ổn định'}
+        {trend < 0 ? t('queue_clear', lang) : trend > 0 ? t('queue_busy', lang) : t('queue_stable', lang)}
       </div>
     </div>
   );
@@ -37,6 +39,7 @@ function StationCard({ station, isSelected, isBest, onClick }: {
   const queueOverrides = useAppStore((s) => s.queueOverrides);
   const rushHourActive = useAppStore((s) => s.rushHourActive);
   const setActiveView = useAppStore((s) => s.setActiveView);
+  const lang = useAppStore((s) => s.lang);
 
   let queue = queueOverrides[station.id] ?? station.queue;
   if (rushHourActive) queue = Math.min(Math.ceil(queue * 2.5), station.slots * 3);
@@ -47,6 +50,8 @@ function StationCard({ station, isSelected, isBest, onClick }: {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.02, y: -2 }}
+      whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className={`p-3 rounded-xl cursor-pointer transition-all duration-200 border ${
         isSelected ? 'border-tasco-blue/50 bg-tasco-blue/5' : 'border-border hover:border-border/50 hover:bg-muted/30'
@@ -58,13 +63,13 @@ function StationCard({ station, isSelected, isBest, onClick }: {
           <div className="text-xs text-muted-foreground truncate">{station.address}</div>
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
-          {isBest && <span className="text-[10px] bg-tasco-blue/20 text-tasco-blue px-1.5 py-0.5 rounded-full">⭐ Best</span>}
+          {isBest && <span className="text-[10px] bg-tasco-blue/20 text-tasco-blue px-1.5 py-0.5 rounded-full">⭐ {t('badge_best', lang)}</span>}
           {station.evCertified && <span className="text-[10px] bg-ev-green/20 text-ev-green px-1.5 py-0.5 rounded-full">⚡ EV</span>}
         </div>
       </div>
       <div className="flex items-center gap-3 mt-2">
         <span className="font-mono text-xs px-2 py-0.5 rounded-full" style={{ background: `${color}22`, color }}>
-          ~{waitMins} phút
+          ~{waitMins} {t('mins_unit', lang)}
         </span>
         <div className="flex gap-0.5">
           {Array.from({ length: station.slots }).map((_, i) => (
@@ -78,8 +83,9 @@ function StationCard({ station, isSelected, isBest, onClick }: {
         <button
           onClick={(e) => { e.stopPropagation(); setActiveView('simulation'); }}
           className="text-xs text-tasco-blue hover:text-tasco-blue/80 transition-colors"
+          aria-label={t('book_btn', lang)}
         >
-          Đặt lịch →
+          {t('book_btn', lang)}
         </button>
       </div>
     </motion.div>
@@ -90,7 +96,7 @@ export default function MapView() {
   const {
     selectedStationId, setSelectedStation, mapFilter, setMapFilter,
     rushHourActive, toggleRushHour, queueOverrides, setQueueOverride,
-    vetcBarVisible, setVetcBarVisible, addToast, setActiveView
+    vetcBarVisible, setVetcBarVisible, addToast, setActiveView, lang
   } = useAppStore();
 
   const [evFilter, setEvFilter] = useState(false);
@@ -108,28 +114,17 @@ export default function MapView() {
 
       if (next !== current) {
         setQueueOverride(station.id, next);
+        const name = station.name.split('@')[1]?.trim() || station.name;
         if (next === 0 && current > 0) {
-          addToast({ message: `🟢 ${station.name.split('@')[1]?.trim() || station.name} vừa giải phóng!`, type: 'success' });
+          addToast({ message: t('toast_cleared', lang, { name }), type: 'success' });
         }
         if (next >= station.slots * 2) {
-          addToast({ message: `🔴 ${station.name.split('@')[1]?.trim() || station.name} đang đầy`, type: 'warning' });
+          addToast({ message: t('toast_full', lang, { name }), type: 'warning' });
         }
       }
     }, 4000);
     return () => clearInterval(interval);
-  }, [queueOverrides, setQueueOverride, addToast]);
-
-  // Random toasts
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const msgs = [
-        { message: '⭐ Best Choice thay đổi → Thủ Đức tiết kiệm 12 phút', type: 'info' as const },
-        { message: '🛣️ VETC: Phát hiện hành trình xa — xe có thể cần rửa Premium', type: 'vetc' as const },
-      ];
-      addToast(msgs[Math.floor(Math.random() * msgs.length)]);
-    }, 25000);
-    return () => clearInterval(interval);
-  }, [addToast]);
+  }, [queueOverrides, setQueueOverride, addToast, lang]);
 
   const filteredStations = useMemo(() => {
     let list = [...STATIONS];
@@ -162,11 +157,16 @@ export default function MapView() {
   const selectedStation = STATIONS.find((s) => s.id === selectedStationId);
   const mapCenter: [number, number] = selectedStation ? [selectedStation.lat, selectedStation.lng] : [10.79, 106.71];
 
-  const filters: { id: typeof mapFilter; label: string }[] = [
-    { id: 'balanced', label: 'Cân bằng' },
-    { id: 'fastest', label: 'Nhanh nhất' },
-    { id: 'nearest', label: 'Gần nhất' },
-    { id: 'cheapest', label: 'Rẻ nhất' },
+  // Eco counter
+  const totalQueuedCars = STATIONS.reduce((sum, s) => sum + (queueOverrides[s.id] ?? s.queue), 0);
+  const idleMinsSaved = rushHourActive ? 0 : Math.round(totalQueuedCars * 3.2);
+  const co2Avoided = (idleMinsSaved * 0.017).toFixed(2);
+
+  const filters: { id: typeof mapFilter; labelKey: 'filter_balanced' | 'filter_fastest' | 'filter_nearest' | 'filter_cheapest' }[] = [
+    { id: 'balanced', labelKey: 'filter_balanced' },
+    { id: 'fastest', labelKey: 'filter_fastest' },
+    { id: 'nearest', labelKey: 'filter_nearest' },
+    { id: 'cheapest', labelKey: 'filter_cheapest' },
   ];
 
   return (
@@ -179,15 +179,16 @@ export default function MapView() {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             className="vetc-bar mx-4 mt-3 px-4 py-3 overflow-hidden"
+            id="vetc-bar"
           >
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-foreground">
-                  🛣️ VETC Alert · Xe của bạn có thể cần rửa
+                  🛣️ {t('vetc_alert', lang)} · {t('vetc_needs_wash', lang)}
                 </div>
                 <div className="text-xs text-muted-foreground mt-0.5">
-                  {VETC_USER.lastTrip.route} · {VETC_USER.lastTrip.distanceKm.toLocaleString()}km · {VETC_USER.lastTrip.tollPasses} trạm thu phí · {VETC_USER.lastTrip.hoursAgo} giờ trước
-                  {' · '}AI Dirt Prediction: <span className="font-mono text-vetc-orange">{VETC_USER.lastTrip.dirtPrediction}%</span>
+                  {VETC_USER.lastTrip.route} · {VETC_USER.lastTrip.distanceKm.toLocaleString()}km · {VETC_USER.lastTrip.tollPasses} {t('vetc_toll', lang)} · {VETC_USER.lastTrip.hoursAgo} {t('vetc_ago', lang)}
+                  {' · '}{t('vetc_dirt_pred', lang)}: <span className="font-mono text-vetc-orange">{VETC_USER.lastTrip.dirtPrediction}%</span>
                 </div>
               </div>
               <div className="flex gap-2 shrink-0">
@@ -195,9 +196,9 @@ export default function MapView() {
                   onClick={() => { setMapFilter('nearest'); setSelectedStation(STATIONS.find(s => s.evCertified)?.id || STATIONS[0].id); }}
                   className="text-xs text-vetc-orange hover:text-vetc-orange/80 transition-colors"
                 >
-                  Tìm trạm gần nhất →
+                  {t('vetc_find', lang)}
                 </button>
-                <button onClick={() => setVetcBarVisible(false)} className="text-muted-foreground hover:text-foreground transition-colors">✕</button>
+                <button onClick={() => setVetcBarVisible(false)} className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Dismiss">✕</button>
               </div>
             </div>
           </motion.div>
@@ -205,7 +206,7 @@ export default function MapView() {
       </AnimatePresence>
 
       {/* Filter Bar */}
-      <div className="flex items-center gap-2 px-4 py-2 flex-wrap">
+      <div className="flex items-center gap-2 px-4 py-2 flex-wrap" id="map-filter">
         <div className="flex gap-1 bg-muted/30 rounded-lg p-0.5">
           {filters.map((f) => (
             <button
@@ -215,7 +216,7 @@ export default function MapView() {
                 mapFilter === f.id ? 'bg-tasco-blue/20 text-tasco-blue' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              {f.label}
+              {t(f.labelKey, lang)}
             </button>
           ))}
         </div>
@@ -237,30 +238,59 @@ export default function MapView() {
             📶 WiFi
           </button>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Rush Hour</span>
+        <div className="ml-auto flex items-center gap-2" id="rush-toggle">
+          <span className="text-xs text-muted-foreground">{t('rush_toggle', lang)}</span>
           <button
             onClick={toggleRushHour}
             className={`w-10 h-5 rounded-full transition-all duration-300 relative ${
               rushHourActive ? 'bg-tasco-red' : 'bg-muted'
             }`}
+            role="switch"
+            aria-checked={rushHourActive}
+            aria-label={t('rush_toggle', lang)}
           >
-            <div className={`w-4 h-4 rounded-full bg-foreground absolute top-0.5 transition-all duration-300 ${
-              rushHourActive ? 'left-5.5' : 'left-0.5'
-            }`} style={{ left: rushHourActive ? '22px' : '2px' }} />
+            <div className={`w-4 h-4 rounded-full bg-foreground absolute top-0.5 transition-all duration-300`}
+              style={{ left: rushHourActive ? '22px' : '2px' }} />
           </button>
         </div>
       </div>
+
+      {/* Eco counter */}
+      <AnimatePresence>
+        {rushHourActive ? (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="px-4 pb-1"
+          >
+            <div className="text-[11px] text-tasco-red/80 flex items-center gap-1">
+              {t('rush_eco_on', lang, { n: totalQueuedCars, co2: (totalQueuedCars * 0.054).toFixed(1) })}
+            </div>
+          </motion.div>
+        ) : totalQueuedCars > 0 ? (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="px-4 pb-1"
+          >
+            <div className="text-[11px] text-ev-green/80 flex items-center gap-1">
+              🌱 {t('rush_eco', lang, { n: idleMinsSaved, co2: co2Avoided })}
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       {/* Main content */}
       <div className="flex-1 flex min-h-0">
         {/* Side Panel */}
         <div className="w-[340px] lg:w-[380px] shrink-0 glass m-3 mr-0 rounded-2xl overflow-hidden flex flex-col">
           <div className="p-3 border-b border-border">
-            <div className="text-sm font-heading font-semibold">{filteredStations.length} trạm rửa xe tại TP.HCM</div>
+            <div className="text-sm font-heading font-semibold">{t('map_title', lang, { n: filteredStations.length })}</div>
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-2 scrollbar-thin">
-            {filteredStations.map((station, i) => (
+            {filteredStations.map((station) => (
               <StationCard
                 key={station.id}
                 station={station}
@@ -307,7 +337,7 @@ export default function MapView() {
                       <div className="font-bold text-sm mb-1">{station.name}</div>
                       <div className="mb-1">{station.address}</div>
                       <div className="flex gap-2 mb-1">
-                        <span>Chờ: ~{Math.ceil((queue / Math.max(station.slots, 1)) * station.avgMins)} phút</span>
+                        <span>{t('wait_est', lang)}: ~{Math.ceil((queue / Math.max(station.slots, 1)) * station.avgMins)} {t('mins_unit', lang)}</span>
                         <span>⭐ {station.rating}</span>
                       </div>
                       <div className="flex gap-1 mb-1">
