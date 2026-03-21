@@ -283,17 +283,24 @@ export default function SimulationView() {
     }
   }, [simulationPhase]);
 
+  const newBalance = VETC_USER.walletBalance - total;
+
   return (
     <div className="h-full flex flex-col">
-      {/* VETC Banner */}
-      <div className="vetc-bar mx-4 mt-3 px-4 py-2">
-        <div className="flex items-center gap-3 text-sm">
+      {/* Journey Bar */}
+      <JourneyBar />
+
+      {/* VETC Banner — causal language */}
+      <div className="vetc-bar mx-4 mt-2 px-4 py-2">
+        <div className="flex items-center gap-3 text-sm flex-wrap">
           <span>🛣️</span>
-          <span className="text-foreground">
-            {VETC_USER.lastTrip.route} · {VETC_USER.lastTrip.distanceKm.toLocaleString()}km · {VETC_USER.lastTrip.hoursAgo}h {t('vetc_ago', lang)}
+          <span className="text-foreground text-xs">
+            {t('vetc_cause', lang, { dist: VETC_USER.lastTrip.distanceKm.toLocaleString(), pct: VETC_USER.lastTrip.dirtPrediction })}
           </span>
           {isEV && <span className="text-ev-green text-xs">⚡ EV-Safe Mode</span>}
-          <span className="font-mono text-vetc-orange ml-auto">{t('sim_dirt_pred', lang)}: {dirtLevel}%</span>
+          <span className="text-xs text-vetc-orange ml-auto flex items-center gap-1">
+            ⭐ {t('vetc_cause_rec', lang)}
+          </span>
         </div>
       </div>
 
