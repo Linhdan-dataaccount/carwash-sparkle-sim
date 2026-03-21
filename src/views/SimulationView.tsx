@@ -606,17 +606,68 @@ export default function SimulationView() {
                   ) : (
                     <>
                       <h3 className="font-heading font-semibold mb-3">🧾 {t('rc_title', lang)}</h3>
+
+                      {/* Payment Complete Banner */}
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="text-center p-4 rounded-xl mb-4"
+                        style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.03))', border: '1px solid rgba(34,197,94,0.2)' }}
+                      >
+                        <div className="text-3xl mb-1">✅</div>
+                        <div className="text-sm font-heading font-bold text-ev-green">{t('pay_done', lang)}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">{t('pay_no_action', lang)}</div>
+                      </motion.div>
+
+                      {/* Wallet Deduction */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="glass p-3 mb-3"
+                      >
+                        <div className="text-xs text-muted-foreground">{t('pay_deducted', lang)}</div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5">{VETC_USER.plate} · {VETC_USER.tier}</div>
+                        <div className="text-lg font-heading font-bold text-vetc-orange mt-1 font-mono">-{formatVND(total)}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{t('pay_new_balance', lang)}: <span className="font-mono">{formatVND(newBalance)}</span></div>
+                      </motion.div>
+
+                      {/* Time Saved */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 }}
+                        className="flex items-start gap-2.5 p-3 rounded-xl mb-3"
+                        style={{ background: 'rgba(0,212,255,0.05)', border: '1px solid rgba(0,212,255,0.12)' }}
+                      >
+                        <span className="text-lg">⏱</span>
+                        <div className="flex-1">
+                          <div className="text-xs font-medium">{t('time_saved', lang)}</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">{t('time_vs', lang)}</div>
+                          <span className="inline-block mt-1 text-[10px] font-bold text-tasco-blue bg-tasco-blue/10 px-2 py-0.5 rounded-full">
+                            {t('faster_badge', lang)}
+                          </span>
+                        </div>
+                      </motion.div>
+
+                      {/* Points earned */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6 }}
+                        className="flex items-center justify-between p-3 rounded-xl mb-4"
+                        style={{ background: 'rgba(249,115,22,0.06)', border: '1px solid rgba(249,115,22,0.15)' }}
+                      >
+                        <span className="text-xs">{t('rc_points', lang)}</span>
+                        <span className="font-mono font-bold text-vetc-orange">+{pointsEarned} pts</span>
+                      </motion.div>
+
+                      {/* Receipt detail */}
                       <div className="glass p-3 space-y-2 text-xs mb-4">
                         <div className="flex justify-between"><span className="text-muted-foreground">{t('rc_service', lang)}</span><span>{scanResults?.recommendation.name}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">{t('rc_vehicle', lang)}</span><span>{carData.label} · {VETC_USER.plate}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">{t('rc_price', lang)}</span><span className="font-mono">{formatVND(price)}</span></div>
                         <div className="flex justify-between text-vetc-orange"><span>{t('rc_discount', lang, { tier: VETC_USER.tier, pct: discount })}</span><span className="font-mono">-{formatVND(discountAmt)}</span></div>
-                        <div className="border-t border-border pt-2 flex justify-between font-medium text-sm">
-                          <span>{t('rc_total', lang)}</span><span className="font-mono">{formatVND(total)}</span>
-                        </div>
-                        <div className="flex justify-between text-muted-foreground"><span>{t('rc_payment', lang)}</span><span>VETC Wallet</span></div>
-                        <div className="flex justify-between text-muted-foreground"><span>{t('rc_balance', lang)}</span><span className="font-mono">{formatVND(VETC_USER.walletBalance - total)}</span></div>
-                        <div className="flex justify-between text-tasco-green"><span>{t('rc_points', lang)}</span><span className="font-mono">+{pointsEarned}</span></div>
                       </div>
 
                       <div className="flex gap-2 mb-3">

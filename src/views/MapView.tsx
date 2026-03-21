@@ -288,7 +288,17 @@ export default function MapView() {
       <div className="flex-1 flex min-h-0">
         {/* Side Panel */}
         <div className="w-[340px] lg:w-[380px] shrink-0 glass m-3 mr-0 rounded-2xl overflow-hidden flex flex-col">
-          <div className="p-3 border-b border-border">
+          {/* Journey context strip */}
+          <div className="px-3 pt-3 pb-2">
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <span className="text-ev-green">✓ {t('journey_logged', lang)}</span>
+              <span className="text-muted-foreground">→</span>
+              <span className="text-tasco-blue font-medium">● {t('journey_finding', lang)}</span>
+              <span className="text-muted-foreground">→</span>
+              <span className="text-muted-foreground">💳 {t('journey_autopay', lang)}</span>
+            </div>
+          </div>
+          <div className="px-3 pb-2 border-b border-border">
             <div className="text-sm font-heading font-semibold">{t('map_title', lang, { n: filteredStations.length })}</div>
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-2 scrollbar-thin">
