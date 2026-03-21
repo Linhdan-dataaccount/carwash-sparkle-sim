@@ -1,16 +1,24 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import TopNav from '@/components/layout/TopNav';
+import ToastContainer from '@/components/layout/ToastContainer';
+import MapView from '@/views/MapView';
+import SimulationView from '@/views/SimulationView';
+import DashboardView from '@/views/DashboardView';
+import { useAppStore } from '@/store/appStore';
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
+  const activeView = useAppStore((s) => s.activeView);
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
+      <TopNav />
+      <main className="flex-1 min-h-0">
+        {activeView === 'map' && <MapView />}
+        {activeView === 'simulation' && <SimulationView />}
+        {activeView === 'dashboard' && <DashboardView />}
+      </main>
+      <ToastContainer />
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
