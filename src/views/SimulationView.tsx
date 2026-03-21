@@ -321,12 +321,14 @@ export default function SimulationView() {
           </AnimatePresence>
 
           <Canvas camera={{ position: [6, 4, 6], fov: 50 }}>
-            <ambientLight intensity={1.2} />
-            <directionalLight position={[5, 8, 5]} intensity={1.5} castShadow />
-            <directionalLight position={[-4, 6, -3]} intensity={0.6} color="#e2e8f0" />
-            <pointLight position={[-3, 2, 0]} intensity={0.6} color="#00d4ff" />
-            <pointLight position={[3, 3, -2]} intensity={0.4} color="#f0f0f0" />
-            <hemisphereLight args={['#cbd5e1', '#1e293b', 0.8]} />
+            <ambientLight intensity={1.8} />
+            <directionalLight position={[5, 10, 5]} intensity={2.2} castShadow />
+            <directionalLight position={[-5, 6, -3]} intensity={1.0} color="#e2e8f0" />
+            <pointLight position={[-3, 3, 0]} intensity={0.8} color="#00d4ff" />
+            <pointLight position={[3, 4, -2]} intensity={0.6} color="#f8fafc" />
+            <pointLight position={[0, 5, 4]} intensity={0.5} color="#ffffff" />
+            <hemisphereLight args={['#e2e8f0', '#334155', 1.0]} />
+            <Environment preset="city" />
             <Suspense fallback={null}>
               <WashTunnel />
               <CarModel carType={selectedCar} phase={simulationPhase} />
