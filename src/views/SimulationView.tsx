@@ -432,7 +432,7 @@ export default function SimulationView() {
         {/* Right Panel */}
         <div className="w-[340px] shrink-0 glass rounded-2xl overflow-y-auto flex flex-col">
           <div className="p-4 flex-1">
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" initial={false}>
               {/* IDLE — Car Selector */}
               {simulationPhase === 'idle' && (
                 <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
