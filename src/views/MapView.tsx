@@ -184,11 +184,13 @@ export default function MapView() {
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-foreground">
-                  🛣️ {t('vetc_alert', lang)} · {t('vetc_needs_wash', lang)}
+                  🛣️ {t('vetc_alert', lang)}
                 </div>
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  {VETC_USER.lastTrip.route} · {VETC_USER.lastTrip.distanceKm.toLocaleString()}km · {VETC_USER.lastTrip.tollPasses} {t('vetc_toll', lang)} · {VETC_USER.lastTrip.hoursAgo} {t('vetc_ago', lang)}
-                  {' · '}{t('vetc_dirt_pred', lang)}: <span className="font-mono text-vetc-orange">{VETC_USER.lastTrip.dirtPrediction}%</span>
+                <div className="text-xs text-foreground mt-1">
+                  {t('vetc_cause', lang, { dist: VETC_USER.lastTrip.distanceKm.toLocaleString(), pct: VETC_USER.lastTrip.dirtPrediction })}
+                </div>
+                <div className="text-xs text-vetc-orange mt-1 flex items-center gap-1">
+                  ⭐ {t('vetc_cause_rec', lang)}
                 </div>
               </div>
               <div className="flex gap-2 shrink-0">
