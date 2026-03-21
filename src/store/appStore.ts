@@ -19,6 +19,8 @@ export interface Toast {
 interface AppState {
   activeView: ViewType;
   setActiveView: (v: ViewType) => void;
+  lang: Lang;
+  setLang: (l: Lang) => void;
 
   // Map
   selectedStationId: string | null;
