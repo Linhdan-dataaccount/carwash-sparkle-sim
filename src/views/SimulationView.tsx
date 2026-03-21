@@ -472,7 +472,7 @@ export default function SimulationView() {
 
               {/* ENTERING / SCANNING / ANALYZING */}
               {['entering', 'scanning', 'analyzing'].includes(simulationPhase) && (
-                <motion.div key="progress" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center h-full">
+                <motion.div key={`progress-${simulationPhase}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center h-full min-h-[200px]">
                   <div className="w-12 h-12 border-2 border-tasco-blue border-t-transparent rounded-full animate-spin mb-4" />
                   <p className="text-sm text-muted-foreground">
                     {simulationPhase === 'entering' ? t('sim_entering', lang) :
