@@ -148,7 +148,7 @@ function WashProgressBar({ steps, currentStep, lang }: { steps: typeof WASH_STEP
             }`}
           >
             <span className="text-lg">{step.icon}</span>
-            <span className="text-sm flex-1">{key ? t(key, lang) : step.label}</span>
+            <span className="text-sm flex-1">{key ? t(key as any, lang) : step.label}</span>
             {isDone && (
               <motion.span
                 initial={{ scale: 0 }}
