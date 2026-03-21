@@ -432,7 +432,7 @@ export default function SimulationView() {
         {/* Right Panel */}
         <div className="w-[340px] shrink-0 glass rounded-2xl overflow-y-auto flex flex-col">
           <div className="p-4 flex-1">
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" initial={false}>
               {/* IDLE — Car Selector */}
               {simulationPhase === 'idle' && (
                 <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -472,7 +472,7 @@ export default function SimulationView() {
 
               {/* ENTERING / SCANNING / ANALYZING */}
               {['entering', 'scanning', 'analyzing'].includes(simulationPhase) && (
-                <motion.div key="progress" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center h-full">
+                <motion.div key={`progress-${simulationPhase}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center h-full min-h-[200px]">
                   <div className="w-12 h-12 border-2 border-tasco-blue border-t-transparent rounded-full animate-spin mb-4" />
                   <p className="text-sm text-muted-foreground">
                     {simulationPhase === 'entering' ? t('sim_entering', lang) :
@@ -542,7 +542,7 @@ export default function SimulationView() {
 
               {/* WASHING */}
               {simulationPhase === 'washing' && (
-                <motion.div key="washing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <motion.div key="washing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-[200px]">
                   <h3 className="font-heading font-semibold mb-3">{t('sim_washing', lang)}</h3>
 
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-4">
