@@ -233,6 +233,20 @@ export const T = {
   vetc_cause_rec:   { vi: 'Đề xuất: Gói Premium Wash',    en: 'Recommended: Premium Wash'  },
   vetc_cause_scan:  { vi: 'Dữ liệu VETC: Phát hiện hành trình cao tốc {km}km qua {toll} trạm thu phí — đây là lý do điểm bụi bẩn cao.',
                       en: 'VETC data: {km}km highway trip across {toll} toll stations — this is why the dirt score is high.' },
+
+  // ── Scan analysis demo ──
+  scan_input:       { vi: '📸 Hình ảnh đầu vào',           en: '📸 Input image'              },
+  scan_ai_detect:   { vi: '🤖 AI đang phân tích vùng bẩn...', en: '🤖 AI analyzing dirt zones...' },
+  scan_zones:       { vi: 'Vùng phát hiện bụi bẩn',        en: 'Detected dirt zones'         },
+  scan_choose_wash: { vi: 'Chọn gói rửa xe phù hợp',      en: 'Choose the right wash package' },
+  scan_ai_rec:      { vi: '🤖 AI đề xuất',                 en: '🤖 AI recommended'           },
+  scan_why:         { vi: 'Tại sao gói này?',              en: 'Why this package?'           },
+  scan_why_high:    { vi: 'Xe rất bẩn ({pct}%) — cần rửa sâu toàn diện để bảo vệ sơn và gầm xe',
+                      en: 'Very dirty ({pct}%) — needs deep cleaning to protect paint and underbody' },
+  scan_why_mid:     { vi: 'Xe bẩn vừa ({pct}%) — rửa toàn diện đủ để phục hồi sạch sẽ',
+                      en: 'Moderately dirty ({pct}%) — full wash sufficient for a clean restore' },
+  scan_why_low:     { vi: 'Xe ít bẩn ({pct}%) — chỉ cần rửa cơ bản, tiết kiệm chi phí',
+                      en: 'Lightly dirty ({pct}%) — basic wash is enough, saves cost' },
 } as const;
 
 export function t(

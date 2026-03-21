@@ -5,12 +5,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/appStore';
 import { VETC_USER, TIERS } from '@/data/vetcUser';
 import { CAR_DATA, generateScanResult, WASH_STEPS_ICE, WASH_STEPS_EV } from '@/data/mockHelpers';
+import type { WashTier } from '@/data/mockHelpers';
 import { formatVND } from '@/utils/formatVND';
 import { playSound } from '@/utils/sounds';
 import { t } from '@/i18n/translations';
 import { JourneyBar } from '@/components/layout/JourneyBar';
 import { AutoPayWidget } from '@/components/simulation/AutoPayWidget';
 import * as THREE from 'three';
+import carVeryDirty from '@/assets/car-very-dirty.jpg';
+import carMediumDirty from '@/assets/car-medium-dirty.jpg';
+import carLightDirty from '@/assets/car-light-dirty.jpg';
 
 // 3D Car
 function CarModel({ carType, phase }: { carType: string; phase: string }) {
@@ -199,15 +203,16 @@ export default function SimulationView() {
     }
     if (simulationPhase === 'scanning') {
       playSound('scan');
+      // Pre-generate results so zones show during analyzing
+      const result = generateScanResult(selectedCar, dirtLevel, isEV);
+      setScanResults(result);
       const timer = setTimeout(() => setSimulationPhase('analyzing'), 2500);
       return () => clearTimeout(timer);
     }
     if (simulationPhase === 'analyzing') {
-      const result = generateScanResult(selectedCar, dirtLevel, isEV);
       const timer = setTimeout(() => {
-        setScanResults(result);
         setSimulationPhase('results');
-      }, 1500);
+      }, 2500);
       return () => clearTimeout(timer);
     }
     if (simulationPhase === 'washing') {
@@ -470,61 +475,197 @@ export default function SimulationView() {
                 </motion.div>
               )}
 
-              {/* ENTERING / SCANNING / ANALYZING */}
+              {/* ENTERING / SCANNING / ANALYZING — with dirty car image */}
               {['entering', 'scanning', 'analyzing'].includes(simulationPhase) && (
-                <motion.div key={`progress-${simulationPhase}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center h-full min-h-[200px]">
-                  <div className="w-12 h-12 border-2 border-tasco-blue border-t-transparent rounded-full animate-spin mb-4" />
-                  <p className="text-sm text-muted-foreground">
-                    {simulationPhase === 'entering' ? t('sim_entering', lang) :
-                     simulationPhase === 'scanning' ? t('sim_scanning', lang) : t('sim_analyzing', lang)}
-                  </p>
+                <motion.div key={`progress-${simulationPhase}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-[200px]">
+                  {/* Input image header */}
+                  <h3 className="font-heading font-semibold mb-2 text-sm">{t('scan_input', lang)}</h3>
+
+                  {/* Dirty car image with scan overlay */}
+                  <div className="relative rounded-xl overflow-hidden mb-3">
+                    <img
+                      src={dirtLevel > 70 ? carVeryDirty : dirtLevel > 50 ? carMediumDirty : carLightDirty}
+                      alt="Dirty car input"
+                      className="w-full h-40 object-cover"
+                    />
+                    {/* Scan line animation */}
+                    {simulationPhase === 'scanning' && (
+                      <motion.div
+                        initial={{ top: 0 }}
+                        animate={{ top: '100%' }}
+                        transition={{ duration: 2.5, ease: 'linear', repeat: Infinity }}
+                        className="absolute left-0 right-0 h-0.5 bg-tasco-blue shadow-[0_0_12px_rgba(0,212,255,0.8)]"
+                      />
+                    )}
+                    {/* Grid overlay during scan */}
+                    {simulationPhase === 'scanning' && (
+                      <div className="absolute inset-0 opacity-40"
+                        style={{
+                          backgroundImage: 'linear-gradient(rgba(0,212,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.15) 1px, transparent 1px)',
+                          backgroundSize: '24px 24px',
+                        }}
+                      />
+                    )}
+                    {/* Dirt level badge */}
+                    <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1 text-xs font-mono">
+                      <span className={dirtLevel > 70 ? 'text-tasco-red' : dirtLevel > 50 ? 'text-tasco-yellow' : 'text-tasco-green'}>
+                        {dirtLevel}%
+                      </span>
+                      <span className="text-muted-foreground ml-1">{t('sim_dirt', lang)}</span>
+                    </div>
+                  </div>
+
+                  {/* Analyzing phase — show detected zones progressively */}
+                  {simulationPhase === 'analyzing' && scanResults && (
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                      <div className="text-xs text-tasco-blue mb-2 flex items-center gap-2">
+                        <div className="w-3 h-3 border-2 border-tasco-blue border-t-transparent rounded-full animate-spin" />
+                        {t('scan_ai_detect', lang)}
+                      </div>
+                      <div className="space-y-1.5">
+                        {scanResults.detectedZones.map((zone, i) => (
+                          <motion.div
+                            key={zone.zone}
+                            initial={{ opacity: 0, x: 12 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.25 }}
+                            className="flex items-center gap-2 text-xs"
+                          >
+                            <span>{zone.icon}</span>
+                            <span className="flex-1 text-muted-foreground">{lang === 'vi' ? zone.zone : zone.zoneEn}</span>
+                            <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${zone.severity}%` }}
+                                transition={{ delay: i * 0.25 + 0.15, duration: 0.5 }}
+                                className={`h-full rounded-full ${zone.severity > 70 ? 'bg-tasco-red' : zone.severity > 40 ? 'bg-tasco-yellow' : 'bg-tasco-green'}`}
+                              />
+                            </div>
+                            <span className="font-mono w-8 text-right" style={{ color: zone.severity > 70 ? 'hsl(var(--tasco-red))' : zone.severity > 40 ? 'hsl(var(--tasco-yellow))' : 'hsl(var(--tasco-green))' }}>
+                              {zone.severity}%
+                            </span>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Scanning phase — spinner */}
+                  {simulationPhase !== 'analyzing' && (
+                    <div className="flex flex-col items-center py-4">
+                      <div className="w-10 h-10 border-2 border-tasco-blue border-t-transparent rounded-full animate-spin mb-3" />
+                      <p className="text-sm text-muted-foreground">
+                        {simulationPhase === 'entering' ? t('sim_entering', lang) : t('sim_scanning', lang)}
+                      </p>
+                    </div>
+                  )}
                 </motion.div>
               )}
 
-              {/* RESULTS */}
+              {/* RESULTS — with tiered wash recommendations */}
               {simulationPhase === 'results' && scanResults && (
-                <motion.div key="results" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}>
-                  <h3 className="font-heading font-semibold mb-3">{t('sim_results', lang)}</h3>
+                <motion.div key="results" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="overflow-y-auto">
+                  <h3 className="font-heading font-semibold mb-2 text-sm">{t('sim_results', lang)}</h3>
+
+                  {/* Input image recap (small) */}
+                  <div className="relative rounded-lg overflow-hidden mb-3 h-24">
+                    <img
+                      src={dirtLevel > 70 ? carVeryDirty : dirtLevel > 50 ? carMediumDirty : carLightDirty}
+                      alt="Scanned car"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute bottom-2 left-2 right-2 flex items-end justify-between">
+                      <div>
+                        <div className="text-[10px] text-muted-foreground">{t('sim_dirt', lang)}</div>
+                        <div className={`text-lg font-mono font-bold ${dirtLevel > 70 ? 'text-tasco-red' : dirtLevel > 50 ? 'text-tasco-yellow' : 'text-tasco-green'}`}>
+                          {dirtLevel}%
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] text-muted-foreground">{scanResults.damage.severity === 'none' ? '✅' : '⚠️'} {lang === 'vi' ? scanResults.damage.label : (scanResults.damage.severity === 'none' ? t('no_damage', lang) : scanResults.damage.severity === 'light' ? t('light_scratch', lang) : t('heavy_dirt', lang))}</div>
+                        {isEV && <div className="text-[10px] text-ev-green mt-0.5">⚡ {t('sim_port_closed', lang)}</div>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Detected zones summary */}
+                  <div className="glass p-2.5 mb-3">
+                    <div className="text-[10px] text-muted-foreground mb-1.5 font-medium">{t('scan_zones', lang)}</div>
+                    <div className="grid grid-cols-5 gap-1">
+                      {scanResults.detectedZones.map((zone) => (
+                        <div key={zone.zone} className="text-center">
+                          <div className="text-sm">{zone.icon}</div>
+                          <div className={`text-[9px] font-mono ${zone.severity > 70 ? 'text-tasco-red' : zone.severity > 40 ? 'text-tasco-yellow' : 'text-tasco-green'}`}>
+                            {zone.severity}%
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
                   {/* Causal VETC context */}
-                  <div className="vetc-bar p-2.5 text-xs mb-3">
+                  <div className="vetc-bar p-2 text-xs mb-3">
                     <span className="font-semibold text-vetc-orange">📡 {lang === 'vi' ? 'Dữ liệu VETC:' : 'VETC data:'}</span>
                     {' '}{t('vetc_cause_scan', lang, { km: VETC_USER.lastTrip.distanceKm.toLocaleString(), toll: VETC_USER.lastTrip.tollPasses })}
                   </div>
 
-                  <div className="mb-3">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span>{t('sim_dirt', lang)}</span>
-                      <span className="font-mono">{scanResults.dirtLevel}%</span>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${scanResults.dirtLevel}%` }}
-                        transition={{ duration: 0.8, ease: 'easeOut' }}
-                        className="h-full rounded-full bg-tasco-red"
-                      />
+                  {/* AI reasoning */}
+                  <div className="text-xs p-2 rounded-lg mb-3" style={{ background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.12)' }}>
+                    <div className="font-medium text-tasco-blue mb-0.5">{t('scan_why', lang)}</div>
+                    <div className="text-muted-foreground">
+                      {dirtLevel > 75 ? t('scan_why_high', lang, { pct: dirtLevel })
+                       : dirtLevel > 45 ? t('scan_why_mid', lang, { pct: dirtLevel })
+                       : t('scan_why_low', lang, { pct: dirtLevel })}
                     </div>
                   </div>
 
-                  <div className="text-xs flex items-center gap-2 mb-2">
-                    <span>{scanResults.damage.severity === 'none' ? '✅' : '⚠️'}</span>
-                    <span>{scanResults.damage.severity === 'none' ? t('no_damage', lang) :
-                           scanResults.damage.severity === 'light' ? t('light_scratch', lang) : t('heavy_dirt', lang)}</span>
-                  </div>
-
-                  {isEV && scanResults.chargingPort && (
-                    <div className="text-xs flex items-center gap-2 mb-2 text-ev-green">
-                      ✅ {t('sim_port_closed', lang)}
-                    </div>
-                  )}
-
-                  <div className="glass p-3 mb-3">
-                    <div className="text-sm font-medium mb-1">{t('sim_recommend', lang)}: {scanResults.recommendation.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatVND(scanResults.recommendation.priceRange[0])} – {formatVND(scanResults.recommendation.priceRange[1])}
-                      {' · '}{scanResults.recommendation.mins[0]}–{scanResults.recommendation.mins[1]} {t('mins_unit', lang)}
-                    </div>
+                  {/* Wash tier selection */}
+                  <div className="text-xs font-medium mb-2">{t('scan_choose_wash', lang)}</div>
+                  <div className="space-y-2 mb-3">
+                    {scanResults.allTiers.map((tier, i) => (
+                      <motion.button
+                        key={tier.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => {
+                          setScanResults({
+                            ...scanResults,
+                            recommendation: { name: tier.name, priceRange: tier.priceRange, mins: tier.mins },
+                          });
+                        }}
+                        className={`w-full text-left p-3 rounded-xl border transition-all ${
+                          scanResults.recommendation.name === tier.name
+                            ? 'border-tasco-blue/50 bg-tasco-blue/10 shadow-[0_0_16px_rgba(0,212,255,0.1)]'
+                            : 'border-border hover:border-border/70'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <span>{tier.icon}</span>
+                            <span className="text-sm font-medium">{lang === 'vi' ? tier.name : tier.nameEn}</span>
+                          </div>
+                          {tier.recommended && (
+                            <span className="text-[9px] font-bold bg-tasco-blue/15 text-tasco-blue px-1.5 py-0.5 rounded-full">
+                              {t('scan_ai_rec', lang)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground mb-1">
+                          {lang === 'vi' ? tier.description : tier.descriptionEn}
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-mono font-medium">
+                            {formatVND(tier.priceRange[0])} – {formatVND(tier.priceRange[1])}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {tier.mins[0]}–{tier.mins[1]} {t('mins_unit', lang)}
+                          </span>
+                        </div>
+                      </motion.button>
+                    ))}
                   </div>
 
                   {/* Auto-pay widget */}

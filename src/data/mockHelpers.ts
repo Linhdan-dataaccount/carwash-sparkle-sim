@@ -13,11 +13,25 @@ export function markerColor(queue: number, slots: number): string {
   return '#ff4444';
 }
 
+export interface WashTier {
+  id: string;
+  name: string;
+  nameEn: string;
+  priceRange: [number, number];
+  mins: [number, number];
+  description: string;
+  descriptionEn: string;
+  recommended: boolean;
+  icon: string;
+}
+
 export interface ScanResult {
   dirtLevel: number;
   damage: { severity: 'none' | 'light' | 'medium'; label: string };
   chargingPort: 'closed' | 'open' | null;
   recommendation: { name: string; priceRange: [number, number]; mins: [number, number] };
+  allTiers: WashTier[];
+  detectedZones: { zone: string; zoneEn: string; severity: number; icon: string }[];
 }
 
 export function generateScanResult(carType: string, dirtLevel: number, isEV: boolean): ScanResult {
@@ -28,20 +42,66 @@ export function generateScanResult(carType: string, dirtLevel: number, isEV: boo
   ];
   const dmg = damages[dirtLevel > 75 ? 2 : dirtLevel > 50 ? 1 : 0];
 
-  const rec = dirtLevel > 70
-    ? { name: 'Premium Wash', priceRange: [150_000, 200_000] as [number, number], mins: [12, 18] as [number, number] }
-    : { name: 'Basic Wash', priceRange: [50_000, 80_000] as [number, number], mins: [8, 12] as [number, number] };
+  // Detected dirt zones based on level
+  const zones = [
+    { zone: 'Thân xe', zoneEn: 'Body panels', severity: Math.min(100, dirtLevel + 5), icon: '🚗' },
+    { zone: 'Gầm xe', zoneEn: 'Underbody', severity: Math.min(100, dirtLevel + 15), icon: '⬇️' },
+    { zone: 'Bánh xe', zoneEn: 'Wheels', severity: Math.min(100, dirtLevel + 10), icon: '⭕' },
+    { zone: 'Kính xe', zoneEn: 'Windshield', severity: Math.max(0, dirtLevel - 15), icon: '🪟' },
+    { zone: 'Nội thất', zoneEn: 'Interior', severity: Math.max(0, dirtLevel - 25), icon: '💺' },
+  ];
+
+  // All wash tiers
+  const tiers: WashTier[] = [
+    {
+      id: 'basic',
+      name: 'Basic Wash',
+      nameEn: 'Basic Wash',
+      priceRange: [50_000, 80_000],
+      mins: [8, 12],
+      description: 'Rửa ngoài cơ bản, phù hợp xe ít bẩn',
+      descriptionEn: 'Basic exterior wash, suitable for lightly dirty cars',
+      recommended: dirtLevel <= 45,
+      icon: '🫧',
+    },
+    {
+      id: 'premium',
+      name: 'Premium Wash',
+      nameEn: 'Premium Wash',
+      priceRange: [150_000, 200_000],
+      mins: [12, 18],
+      description: 'Rửa toàn diện + gầm xe + nội thất, xe bẩn trung bình',
+      descriptionEn: 'Full wash + underbody + interior, for moderately dirty cars',
+      recommended: dirtLevel > 45 && dirtLevel <= 75,
+      icon: '✨',
+    },
+    {
+      id: 'detailing',
+      name: 'Full Detailing',
+      nameEn: 'Full Detailing',
+      priceRange: [350_000, 500_000],
+      mins: [25, 40],
+      description: 'Chi tiết từng cm², đánh bóng, phủ sáp, xe rất bẩn / cao cấp',
+      descriptionEn: 'Detail every cm², polish, wax coating, for very dirty / premium cars',
+      recommended: dirtLevel > 75,
+      icon: '💎',
+    },
+  ];
 
   if (isEV) {
-    rec.name = 'Premium EV Wash';
-    rec.priceRange = [180_000, 250_000];
+    tiers[1] = { ...tiers[1], id: 'premium_ev', name: 'Premium EV Wash', nameEn: 'Premium EV Wash', priceRange: [180_000, 250_000], icon: '⚡' };
+    tiers[2] = { ...tiers[2], priceRange: [400_000, 550_000] };
   }
+
+  const rec = tiers.find(t => t.recommended) || tiers[1];
 
   return {
     dirtLevel,
     damage: dmg,
     chargingPort: isEV ? 'closed' : null,
-    recommendation: rec,
+    recommendation: { name: rec.name, priceRange: rec.priceRange, mins: rec.mins },
+    allTiers: tiers,
+    detectedZones: zones,
   };
 }
 
