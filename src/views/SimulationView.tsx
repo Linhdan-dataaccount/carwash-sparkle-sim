@@ -142,6 +142,8 @@ function WashProgressBar({ steps, currentStep, lang }: { steps: typeof WASH_STEP
         const isActive = i === currentStep;
         const isDone = i < currentStep;
         const key = stepKeys[step.label];
+        const translated = key ? t(key as any, lang) : step.label;
+        const label = translated === key ? step.label : translated;
         return (
           <motion.div
             key={i}
@@ -154,7 +156,7 @@ function WashProgressBar({ steps, currentStep, lang }: { steps: typeof WASH_STEP
             }`}
           >
             <span className="text-lg">{step.icon}</span>
-            <span className="text-sm flex-1">{key ? t(key as any, lang) : step.label}</span>
+            <span className="text-sm flex-1">{label}</span>
             {isDone && (
               <motion.span
                 initial={{ scale: 0 }}
