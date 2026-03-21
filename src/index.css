@@ -2,95 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --bg-base: 240 33% 5%;
+    --bg-card: 240 20% 9%;
+    --bg-glass: 0 0% 100% / 0.04;
+    --border-dim: 0 0% 100% / 0.08;
+    --border-mid: 0 0% 100% / 0.14;
+    --tasco-blue: 191 100% 50%;
+    --tasco-green: 153 100% 50%;
+    --tasco-yellow: 50 100% 50%;
+    --tasco-red: 0 100% 63%;
+    --tasco-purple: 263 84% 52%;
+    --ev-green: 142 71% 45%;
+    --vetc-orange: 25 95% 53%;
+    --text-primary: 0 0% 94%;
+    --text-muted: 220 9% 46%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --background: var(--bg-base);
+    --foreground: var(--text-primary);
+    --card: var(--bg-card);
+    --card-foreground: var(--text-primary);
+    --popover: var(--bg-card);
+    --popover-foreground: var(--text-primary);
+    --primary: var(--tasco-blue);
+    --primary-foreground: 240 33% 5%;
+    --secondary: var(--bg-card);
+    --secondary-foreground: var(--text-primary);
+    --muted: 220 13% 14%;
+    --muted-foreground: var(--text-muted);
+    --accent: var(--tasco-blue);
+    --accent-foreground: 240 33% 5%;
+    --destructive: var(--tasco-red);
+    --destructive-foreground: 0 0% 94%;
+    --border: var(--border-dim);
+    --input: var(--border-mid);
+    --ring: var(--tasco-blue);
+    --radius: 0.75rem;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: var(--bg-card);
+    --sidebar-foreground: var(--text-primary);
+    --sidebar-primary: var(--tasco-blue);
+    --sidebar-primary-foreground: 240 33% 5%;
+    --sidebar-accent: var(--bg-glass);
+    --sidebar-accent-foreground: var(--text-primary);
+    --sidebar-border: var(--border-dim);
+    --sidebar-ring: var(--tasco-blue);
   }
 }
 
@@ -98,8 +57,111 @@ All colors MUST be HSL.
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
   }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+}
+
+@layer components {
+  .glass {
+    background: hsl(var(--bg-glass));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--border-dim));
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .vetc-bar {
+    background: linear-gradient(135deg, rgba(249,115,22,0.12), rgba(249,115,22,0.04));
+    border: 1px solid rgba(249,115,22,0.3);
+    border-left: 3px solid hsl(var(--vetc-orange));
+    border-radius: 12px;
+  }
+
+  .font-mono-data {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .font-heading {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  .scan-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.08) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: grid-pulse 0.5s ease-in-out infinite alternate;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .scan-grid.active {
+    opacity: 1;
+  }
+
+  .marker-pulse {
+    animation: marker-ring 1.5s ease-out infinite;
+  }
+
+  .shimmer {
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+}
+
+@keyframes grid-pulse {
+  from { opacity: 0.5; }
+  to { opacity: 1; }
+}
+
+@keyframes marker-ring {
+  0% { box-shadow: 0 0 0 0 rgba(0,212,255,0.5); }
+  100% { box-shadow: 0 0 0 20px rgba(0,212,255,0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes confetti-fall {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes dirt-fade {
+  0% { opacity: 0.7; }
+  100% { opacity: 0; }
+}
+
+/* Leaflet overrides */
+.leaflet-container {
+  background: hsl(var(--bg-base)) !important;
+  height: 100%;
+  width: 100%;
+}
+.leaflet-tile-pane {
+  filter: brightness(0.6) contrast(1.2) saturate(0.3) hue-rotate(180deg);
+}
+.leaflet-control-attribution {
+  display: none !important;
+}
+.leaflet-control-zoom {
+  border: none !important;
+}
+.leaflet-control-zoom a {
+  background: hsl(var(--bg-card)) !important;
+  color: hsl(var(--text-primary)) !important;
+  border: 1px solid hsl(var(--border-dim)) !important;
 }
