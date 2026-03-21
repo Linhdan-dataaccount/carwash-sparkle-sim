@@ -3,6 +3,7 @@ import ToastContainer from '@/components/layout/ToastContainer';
 import MapView from '@/views/MapView';
 import SimulationView from '@/views/SimulationView';
 import DashboardView from '@/views/DashboardView';
+import ScannerView from '@/views/ScannerView';
 import { useAppStore } from '@/store/appStore';
 
 const Index = () => {
@@ -14,6 +15,7 @@ const Index = () => {
       <main className="flex-1 min-h-0">
         {activeView === 'map' && <MapView />}
         {activeView === 'simulation' && <SimulationView />}
+        {activeView === 'scanner' && <ScannerView />}
         {activeView === 'dashboard' && <DashboardView />}
       </main>
       <ToastContainer />

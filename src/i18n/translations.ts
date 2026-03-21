@@ -256,7 +256,10 @@ export const T = {
   scan_why_mid:     { vi: 'Xe bẩn vừa ({pct}%) — rửa toàn diện đủ để phục hồi sạch sẽ',
                       en: 'Moderately dirty ({pct}%) — full wash sufficient for a clean restore' },
   scan_why_low:     { vi: 'Xe ít bẩn ({pct}%) — chỉ cần rửa cơ bản, tiết kiệm chi phí',
-                      en: 'Lightly dirty ({pct}%) — basic wash is enough, saves cost' },
+                    en: 'Lightly dirty ({pct}%) — basic wash is enough, saves cost' },
+
+  // ── AI Scanner tab ──
+  nav_scanner:      { vi: 'Máy quét AI',          en: 'AI Scanner'         },
 } as const;
 
 export function t(

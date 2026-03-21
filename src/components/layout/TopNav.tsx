@@ -2,9 +2,10 @@ import { useAppStore, type ViewType } from '@/store/appStore';
 import { t } from '@/i18n/translations';
 import { motion } from 'framer-motion';
 
-const TABS: { id: ViewType; labelKey: 'nav_map' | 'nav_sim' | 'nav_dash'; icon: string }[] = [
+const TABS: { id: ViewType; labelKey: 'nav_map' | 'nav_sim' | 'nav_dash' | 'nav_scanner'; icon: string }[] = [
   { id: 'map', labelKey: 'nav_map', icon: '🗺️' },
   { id: 'simulation', labelKey: 'nav_sim', icon: '🚗' },
+  { id: 'scanner', labelKey: 'nav_scanner', icon: '🤖' },
   { id: 'dashboard', labelKey: 'nav_dash', icon: '📊' },
 ];
 
