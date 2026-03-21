@@ -128,12 +128,17 @@ function WashTunnel() {
 }
 
 function WashProgressBar({ steps, currentStep, lang }: { steps: typeof WASH_STEPS_ICE; currentStep: number; lang: 'vi' | 'en' }) {
-  // Bilingual step labels
-  const stepKeys: Record<string, 'step_soap' | 'step_rinse' | 'step_engine' | 'step_dry' | 'step_vacuum' | 'step_inspect' | 'step_ev_soap' | 'step_ev_rinse' | 'step_ev_port' | 'step_ev_inspect'> = {
-    'Phun bọt xà phòng': 'step_soap', 'Rửa áp lực cao': 'step_rinse', 'Rửa khoang máy': 'step_engine',
-    'Sấy khô': 'step_dry', 'Hút bụi nội thất': 'step_vacuum', 'Kiểm tra chất lượng': 'step_inspect',
-    'Phun bọt EV-Safe': 'step_ev_soap', 'Rửa áp lực thấp': 'step_ev_rinse',
-    'Kiểm tra cổng sạc': 'step_ev_port', 'Kiểm tra an toàn EV': 'step_ev_inspect',
+  const labels: Record<string, { vi: string; en: string }> = {
+    'Phun bọt xà phòng': { vi: 'Phun bọt xà phòng', en: 'Foam application' },
+    'Rửa áp lực cao':    { vi: 'Rửa áp lực cao', en: 'High-pressure rinse' },
+    'Rửa khoang máy':    { vi: 'Rửa khoang máy', en: 'Engine bay clean' },
+    'Sấy khô':           { vi: 'Sấy khô', en: 'Air drying' },
+    'Hút bụi nội thất':  { vi: 'Hút bụi nội thất', en: 'Interior vacuum' },
+    'Kiểm tra chất lượng':{ vi: 'Kiểm tra chất lượng', en: 'Quality inspection' },
+    'Phun bọt EV-Safe':  { vi: 'Phun bọt EV-Safe', en: 'EV-safe foam' },
+    'Rửa áp lực thấp':   { vi: 'Rửa áp lực thấp', en: 'Reduced-pressure rinse' },
+    'Kiểm tra cổng sạc': { vi: 'Kiểm tra cổng sạc', en: 'Charging port check' },
+    'Kiểm tra an toàn EV':{ vi: 'Kiểm tra an toàn EV', en: 'EV safety check' },
   };
 
   return (
@@ -141,9 +146,7 @@ function WashProgressBar({ steps, currentStep, lang }: { steps: typeof WASH_STEP
       {steps.map((step, i) => {
         const isActive = i === currentStep;
         const isDone = i < currentStep;
-        const key = stepKeys[step.label];
-        const translated = key ? t(key as any, lang) : step.label;
-        const label = translated === key ? step.label : translated;
+        const label = labels[step.label]?.[lang] ?? step.label;
         return (
           <motion.div
             key={i}
