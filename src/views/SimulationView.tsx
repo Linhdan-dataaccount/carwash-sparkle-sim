@@ -8,6 +8,8 @@ import { CAR_DATA, generateScanResult, WASH_STEPS_ICE, WASH_STEPS_EV } from '@/d
 import { formatVND } from '@/utils/formatVND';
 import { playSound } from '@/utils/sounds';
 import { t } from '@/i18n/translations';
+import { JourneyBar } from '@/components/layout/JourneyBar';
+import { AutoPayWidget } from '@/components/simulation/AutoPayWidget';
 import * as THREE from 'three';
 
 // 3D Car
