@@ -477,7 +477,7 @@ export default function SimulationView() {
 
               {/* ENTERING / SCANNING / ANALYZING — with dirty car image */}
               {['entering', 'scanning', 'analyzing'].includes(simulationPhase) && (
-                <motion.div key={`progress-${simulationPhase}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-[200px]">
+                <motion.div key="scan-group" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-[200px]">
                   {/* Input image header */}
                   <h3 className="font-heading font-semibold mb-2 text-sm">{t('scan_input', lang)}</h3>
 
