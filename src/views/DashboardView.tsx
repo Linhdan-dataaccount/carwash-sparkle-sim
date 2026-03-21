@@ -452,6 +452,67 @@ export default function DashboardView() {
           {/* VETC */}
           {activeSection === 'vetc' && (
             <motion.div key="vetc" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              {/* Checkout Time Comparison */}
+              <div className="glass p-4 mb-4">
+                <h3 className="text-sm font-heading font-semibold mb-3">{t('compare_title', lang)}</h3>
+                <div className="space-y-3">
+                  {/* VETC */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <div>
+                          <span className="text-xs font-bold text-vetc-orange">VETC</span>
+                          <span className="text-[10px] text-muted-foreground ml-2">{t('compare_auto', lang)}</span>
+                        </div>
+                        <span className="text-xs font-mono font-bold text-ev-green">~11s</span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <motion.div initial={{ width: 0 }} animate={{ width: '7%' }} transition={{ duration: 0.6 }} className="h-full rounded-full bg-ev-green" />
+                      </div>
+                    </div>
+                  </div>
+                  {/* Cash */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <div>
+                          <span className="text-xs font-medium">{t('compare_cash', lang)}</span>
+                          <span className="text-[10px] text-muted-foreground ml-2">{t('compare_cash_sub', lang)}</span>
+                        </div>
+                        <span className="text-xs font-mono text-muted-foreground">~2m 30s</span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <motion.div initial={{ width: 0 }} animate={{ width: '100%' }} transition={{ duration: 0.8, delay: 0.2 }} className="h-full rounded-full bg-tasco-red/60" />
+                      </div>
+                    </div>
+                  </div>
+                  {/* Card/QR */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <div>
+                          <span className="text-xs font-medium">{t('compare_card', lang)}</span>
+                          <span className="text-[10px] text-muted-foreground ml-2">{t('compare_card_sub', lang)}</span>
+                        </div>
+                        <span className="text-xs font-mono text-muted-foreground">~45s</span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <motion.div initial={{ width: 0 }} animate={{ width: '30%' }} transition={{ duration: 0.7, delay: 0.4 }} className="h-full rounded-full bg-tasco-yellow/60" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Winner callout */}
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
+                  <span className="text-xs font-medium text-ev-green">{t('compare_winner', lang)}</span>
+                  <span className="text-lg font-heading font-bold text-tasco-blue">13×</span>
+                </div>
+                {/* Daily scale */}
+                <div className="text-[10px] text-muted-foreground mt-2">
+                  {t('compare_daily', lang, { n: 89, h: Math.round(89 * 0.6 * 2.3 / 60) })}
+                </div>
+              </div>
+
               <div className="glass p-4 mb-4 vetc-bar">
                 <div className="flex items-center justify-between flex-wrap gap-2 text-sm">
                   <span>{t('dash_vetc_total', lang)}: <span className="font-mono font-bold">{formatVND(8_200_000)}</span></span>

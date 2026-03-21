@@ -185,6 +185,54 @@ export const T = {
   no_damage:      { vi: 'Không phát hiện hư hại', en: 'No damage detected' },
   light_scratch:  { vi: 'Xước nhẹ mặt sơn',   en: 'Light paint scratches' },
   heavy_dirt:     { vi: 'Bụi bẩn nặng vùng gầm xe', en: 'Heavy underbody dirt' },
+
+  // ── Auto-pay widget ──
+  autopay_title:    { vi: 'Thanh toán tự động qua VETC', en: 'Auto-pay via VETC'         },
+  autopay_linked:   { vi: 'Tài khoản VETC đã liên kết',  en: 'VETC account linked'        },
+  autopay_balance:  { vi: 'Số dư ví',                     en: 'Wallet balance'             },
+  autopay_charge:   { vi: 'Thanh toán ước tính',          en: 'Estimated charge'           },
+  autopay_no_action:{ vi: 'Không cần thao tác thêm — thanh toán sẽ tự động xử lý khi hoàn tất',
+                      en: 'No action needed — payment processes automatically when complete' },
+
+  // ── Payment complete ──
+  pay_done:         { vi: 'Thanh toán hoàn tất qua VETC', en: 'Payment complete via VETC'  },
+  pay_no_action:    { vi: 'Không cần thao tác thêm',      en: 'No action was required from you' },
+  pay_deducted:     { vi: 'Trừ từ ví VETC',               en: 'Deducted from VETC wallet'  },
+  pay_new_balance:  { vi: 'Số dư mới',                    en: 'New balance'                },
+  time_saved:       { vi: 'Tiết kiệm ~3 phút thanh toán', en: 'Saved ~3 minutes at checkout' },
+  time_vs:          { vi: 'VETC: ~11 giây · Tiền mặt: ~2 phút 30 giây',
+                      en: 'VETC: ~11 sec · Cash: ~2 min 30 sec'                            },
+  faster_badge:     { vi: '13× nhanh hơn',                en: '13× faster'                 },
+
+  // ── Comparison panel ──
+  compare_title:    { vi: 'So sánh thời gian thanh toán', en: 'Checkout time comparison'   },
+  compare_auto:     { vi: 'Thanh toán tự động',           en: 'Auto payment'               },
+  compare_cash:     { vi: 'Tiền mặt',                     en: 'Cash'                       },
+  compare_cash_sub: { vi: 'Đếm tiền, thối lại, ký tên',   en: 'Count, change, sign'        },
+  compare_card:     { vi: 'Thẻ / QR',                     en: 'Card / QR'                  },
+  compare_card_sub: { vi: 'Mở app, quét, chờ xác nhận',   en: 'Open app, scan, wait'       },
+  compare_winner:   { vi: 'VETC nhanh hơn tiền mặt',      en: 'VETC is faster than cash'   },
+  compare_daily:    { vi: 'Với {n} xe hôm nay: tiết kiệm ~{h} giờ xử lý',
+                      en: 'With {n} cars today: saves ~{h} hrs of processing'               },
+
+  // ── Journey bar ──
+  journey_highway:  { vi: 'Cao tốc',     en: 'Highway'  },
+  journey_detect:   { vi: 'Phát hiện',   en: 'Detected' },
+  journey_scan:     { vi: 'Quét AI',     en: 'AI Scan'  },
+  journey_wash:     { vi: 'Rửa xe',      en: 'Washing'  },
+  journey_pay:      { vi: 'VETC trả',    en: 'VETC pays'},
+
+  // ── Side panel journey strip ──
+  journey_logged:   { vi: 'Cao tốc ghi nhận', en: 'Highway logged'     },
+  journey_finding:  { vi: 'Tìm trạm rửa xe',  en: 'Finding station'    },
+  journey_autopay:  { vi: 'VETC tự thanh toán', en: 'VETC auto-pay'    },
+
+  // ── VETC causal ──
+  vetc_cause:       { vi: 'Hành trình QL1A · {dist}km qua VETC → {pct}% bụi bẩn phát hiện',
+                      en: 'Highway trip QL1A · {dist}km via VETC → {pct}% dirt detected'   },
+  vetc_cause_rec:   { vi: 'Đề xuất: Gói Premium Wash',    en: 'Recommended: Premium Wash'  },
+  vetc_cause_scan:  { vi: 'Dữ liệu VETC: Phát hiện hành trình cao tốc {km}km qua {toll} trạm thu phí — đây là lý do điểm bụi bẩn cao.',
+                      en: 'VETC data: {km}km highway trip across {toll} toll stations — this is why the dirt score is high.' },
 } as const;
 
 export function t(

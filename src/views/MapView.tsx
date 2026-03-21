@@ -184,11 +184,13 @@ export default function MapView() {
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-foreground">
-                  🛣️ {t('vetc_alert', lang)} · {t('vetc_needs_wash', lang)}
+                  🛣️ {t('vetc_alert', lang)}
                 </div>
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  {VETC_USER.lastTrip.route} · {VETC_USER.lastTrip.distanceKm.toLocaleString()}km · {VETC_USER.lastTrip.tollPasses} {t('vetc_toll', lang)} · {VETC_USER.lastTrip.hoursAgo} {t('vetc_ago', lang)}
-                  {' · '}{t('vetc_dirt_pred', lang)}: <span className="font-mono text-vetc-orange">{VETC_USER.lastTrip.dirtPrediction}%</span>
+                <div className="text-xs text-foreground mt-1">
+                  {t('vetc_cause', lang, { dist: VETC_USER.lastTrip.distanceKm.toLocaleString(), pct: VETC_USER.lastTrip.dirtPrediction })}
+                </div>
+                <div className="text-xs text-vetc-orange mt-1 flex items-center gap-1">
+                  ⭐ {t('vetc_cause_rec', lang)}
                 </div>
               </div>
               <div className="flex gap-2 shrink-0">
@@ -286,7 +288,17 @@ export default function MapView() {
       <div className="flex-1 flex min-h-0">
         {/* Side Panel */}
         <div className="w-[340px] lg:w-[380px] shrink-0 glass m-3 mr-0 rounded-2xl overflow-hidden flex flex-col">
-          <div className="p-3 border-b border-border">
+          {/* Journey context strip */}
+          <div className="px-3 pt-3 pb-2">
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <span className="text-ev-green">✓ {t('journey_logged', lang)}</span>
+              <span className="text-muted-foreground">→</span>
+              <span className="text-tasco-blue font-medium">● {t('journey_finding', lang)}</span>
+              <span className="text-muted-foreground">→</span>
+              <span className="text-muted-foreground">💳 {t('journey_autopay', lang)}</span>
+            </div>
+          </div>
+          <div className="px-3 pb-2 border-b border-border">
             <div className="text-sm font-heading font-semibold">{t('map_title', lang, { n: filteredStations.length })}</div>
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-2 scrollbar-thin">
