@@ -4,7 +4,7 @@ import type { ScanResult } from '@/data/mockHelpers';
 import { INITIAL_ORDERS } from '@/data/liveOrders';
 import type { Lang } from '@/i18n/translations';
 
-export type ViewType = 'map' | 'simulation' | 'dashboard';
+export type ViewType = 'map' | 'simulation' | 'dashboard' | 'scanner';
 export type CarType = 'sedan' | 'suv' | 'sports' | 'vinfast_vf8' | 'vinfast_vf9';
 export type SimPhase = 'idle' | 'ev_check' | 'entering' | 'scanning' | 'analyzing' | 'results' | 'washing' | 'complete';
 export type MapFilter = 'balanced' | 'fastest' | 'nearest' | 'cheapest' | 'ev_only';
