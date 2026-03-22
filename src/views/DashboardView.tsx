@@ -83,6 +83,7 @@ const SECTION_KEYS: { id: ExtDashSection; labelKey: keyof typeof import('@/i18n/
   { id: 'inventory', labelKey: 'dash_inventory', icon: '🧪' },
   { id: 'quality', labelKey: 'dash_quality', icon: '🏅' },
   { id: 'vetc', labelKey: 'dash_vetc', icon: '💳' },
+  { id: 'partners' as any, labelKey: 'dash_partners', icon: '🤝' },
   { id: 'impact', labelKey: 'dash_impact', icon: '🌱' },
 ];
 
