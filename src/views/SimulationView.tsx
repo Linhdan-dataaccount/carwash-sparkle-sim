@@ -712,6 +712,13 @@ export default function SimulationView() {
               {/* WASHING */}
               {simulationPhase === 'washing' && (
                 <motion.div key="washing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-[200px]">
+                  {/* Back button — go back to results to re-choose wash tier */}
+                  <button
+                    onClick={() => handleGoBack('results')}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors mb-2 flex items-center gap-1"
+                  >
+                    {t('sim_back_results', lang)}
+                  </button>
                   <h3 className="font-heading font-semibold mb-3">{t('sim_washing', lang)}</h3>
 
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-4">
