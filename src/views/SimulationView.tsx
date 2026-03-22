@@ -586,6 +586,13 @@ export default function SimulationView() {
               {/* RESULTS — with tiered wash recommendations */}
               {simulationPhase === 'results' && scanResults && (
                 <motion.div key="results" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="overflow-y-auto">
+                  {/* Back button */}
+                  <button
+                    onClick={() => handleGoBack('idle')}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors mb-2 flex items-center gap-1"
+                  >
+                    {t('sim_back_select', lang)}
+                  </button>
                   <h3 className="font-heading font-semibold mb-2 text-sm">{t('sim_results', lang)}</h3>
 
                   {/* Input image recap (small) */}
