@@ -286,10 +286,9 @@ export const T = {
   ctx_proceed_scan: { vi: '→ Tiến hành quét xe',   en: '→ Proceed to Scan'  },
   ctx_proceed_wash: { vi: '→ Tiến hành rửa xe',   en: '→ Proceed to Wash'  },
   ctx_view_report:  { vi: '→ Xem báo cáo',        en: '→ View Report'      },
-} as const;
-  sim_back:       { vi: '← Quay lại',         en: '← Go back'         },
-  sim_back_select:{ vi: '← Chọn lại xe',      en: '← Change car'      },
-  sim_back_results:{ vi: '← Xem lại kết quả', en: '← Back to results' },
+  sim_back:         { vi: '← Quay lại',           en: '← Go back'         },
+  sim_back_select:  { vi: '← Chọn lại xe',        en: '← Change car'      },
+  sim_back_results: { vi: '← Xem lại kết quả',    en: '← Back to results' },
 } as const;
 
 export function t(
