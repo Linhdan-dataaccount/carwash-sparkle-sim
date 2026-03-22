@@ -16,7 +16,7 @@ export default function TopNav() {
   const lang = useAppStore((s) => s.lang);
   const setLang = useAppStore((s) => s.setLang);
 
-  const activeStepIdx = WORKFLOW_STEPS.findIndex(s => s.view === activeView);
+  
 
   return (
     <nav className="h-14 flex items-center justify-between px-6 border-b border-border bg-card/80 backdrop-blur-md relative z-50">
