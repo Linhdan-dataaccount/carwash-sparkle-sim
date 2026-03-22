@@ -292,6 +292,15 @@ export function t(
   key: keyof typeof T,
   lang: Lang,
   vars?: Record<string, string | number>,
+  sim_back:       { vi: '← Quay lại',         en: '← Go back'         },
+  sim_back_select:{ vi: '← Chọn lại xe',      en: '← Change car'      },
+  sim_back_results:{ vi: '← Xem lại kết quả', en: '← Back to results' },
+} as const;
+
+export function t(
+  key: keyof typeof T,
+  lang: Lang,
+  vars?: Record<string, string | number>,
 ): string {
   let str: string = T[key]?.[lang] ?? T[key]?.['vi'] ?? String(key);
   if (vars) {

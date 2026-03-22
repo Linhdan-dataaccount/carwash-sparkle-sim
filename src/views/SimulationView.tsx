@@ -199,8 +199,13 @@ export default function SimulationView() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Track whether auto-advance is paused (user went back)
+  const [autoAdvancePaused, setAutoAdvancePaused] = useState(false);
+
   // Phase machine
   useEffect(() => {
+    if (autoAdvancePaused) return;
+
     if (simulationPhase === 'entering') {
       playSound('move');
       const timer = setTimeout(() => setSimulationPhase('scanning'), 2000);
@@ -208,7 +213,6 @@ export default function SimulationView() {
     }
     if (simulationPhase === 'scanning') {
       playSound('scan');
-      // Pre-generate results so zones show during analyzing
       const result = generateScanResult(selectedCar, dirtLevel, isEV);
       setScanResults(result);
       const timer = setTimeout(() => setSimulationPhase('analyzing'), 2500);
@@ -230,7 +234,7 @@ export default function SimulationView() {
           if (i < steps.length - 1) setWashStep(i + 1);
         }, cumulative));
       });
-      const total = steps.reduce((s, st) => s + st.durationMs, 0);
+      const totalDur = steps.reduce((s, st) => s + st.durationMs, 0);
       timeouts.push(setTimeout(() => {
         playSound('complete');
         setShowCelebration(true);
@@ -242,10 +246,19 @@ export default function SimulationView() {
         const pts = Math.floor(price / 1000);
         addWash(pts);
         addToast({ message: t('toast_complete', lang, { pts }), type: 'success' });
-      }, total + 1000));
+      }, totalDur + 1000));
       return () => timeouts.forEach(clearTimeout);
     }
-  }, [simulationPhase]);
+  }, [simulationPhase, autoAdvancePaused]);
+
+  const handleGoBack = (targetPhase: import('@/store/appStore').SimPhase) => {
+    setAutoAdvancePaused(false);
+    setSimulationPhase(targetPhase);
+    if (targetPhase === 'idle') {
+      setScanResults(null);
+      setWashStep(0);
+    }
+  };
 
   const handleStart = () => {
     if (isEV) {
