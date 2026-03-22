@@ -496,6 +496,14 @@ export default function SimulationView() {
               {/* ENTERING / SCANNING / ANALYZING — with dirty car image */}
               {['entering', 'scanning', 'analyzing'].includes(simulationPhase) && (
                 <motion.div key="scan-group" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-[200px]">
+                  {/* Back button */}
+                  <button
+                    onClick={() => handleGoBack('idle')}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors mb-2 flex items-center gap-1"
+                  >
+                    {t('sim_back_select', lang)}
+                  </button>
+
                   {/* Input image header */}
                   <h3 className="font-heading font-semibold mb-2 text-sm">{t('scan_input', lang)}</h3>
 
@@ -506,7 +514,6 @@ export default function SimulationView() {
                       alt="Dirty car input"
                       className="w-full h-40 object-cover"
                     />
-                    {/* Scan line animation */}
                     {simulationPhase === 'scanning' && (
                       <motion.div
                         initial={{ top: 0 }}
@@ -515,7 +522,6 @@ export default function SimulationView() {
                         className="absolute left-0 right-0 h-0.5 bg-tasco-blue shadow-[0_0_12px_rgba(0,212,255,0.8)]"
                       />
                     )}
-                    {/* Grid overlay during scan */}
                     {simulationPhase === 'scanning' && (
                       <div className="absolute inset-0 opacity-40"
                         style={{
@@ -524,7 +530,6 @@ export default function SimulationView() {
                         }}
                       />
                     )}
-                    {/* Dirt level badge */}
                     <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1 text-xs font-mono">
                       <span className={dirtLevel > 70 ? 'text-tasco-red' : dirtLevel > 50 ? 'text-tasco-yellow' : 'text-tasco-green'}>
                         {dirtLevel}%
@@ -533,7 +538,6 @@ export default function SimulationView() {
                     </div>
                   </div>
 
-                  {/* Analyzing phase — show detected zones progressively */}
                   {simulationPhase === 'analyzing' && scanResults && (
                     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
                       <div className="text-xs text-tasco-blue mb-2 flex items-center gap-2">
@@ -568,7 +572,6 @@ export default function SimulationView() {
                     </motion.div>
                   )}
 
-                  {/* Scanning phase — spinner */}
                   {simulationPhase !== 'analyzing' && (
                     <div className="flex flex-col items-center py-4">
                       <div className="w-10 h-10 border-2 border-tasco-blue border-t-transparent rounded-full animate-spin mb-3" />
