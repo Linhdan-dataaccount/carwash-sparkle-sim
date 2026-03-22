@@ -9,13 +9,6 @@ const TABS: { id: ViewType; labelKey: 'nav_map' | 'nav_sim' | 'nav_dash' | 'nav_
   { id: 'dashboard', labelKey: 'nav_dash', icon: '📊' },
 ];
 
-// Workflow step mapping: which views map to which step
-const WORKFLOW_STEPS = [
-  { view: 'map' as ViewType, labelVi: 'Chọn trạm', labelEn: 'Select', icon: '📍' },
-  { view: 'scanner' as ViewType, labelVi: 'Quét xe', labelEn: 'Scan', icon: '🤖' },
-  { view: 'simulation' as ViewType, labelVi: 'Rửa xe', labelEn: 'Wash', icon: '🚿' },
-  { view: 'dashboard' as ViewType, labelVi: 'Báo cáo', labelEn: 'Report', icon: '📊' },
-];
 
 export default function TopNav() {
   const activeView = useAppStore((s) => s.activeView);
