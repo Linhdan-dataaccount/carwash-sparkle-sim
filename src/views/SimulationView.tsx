@@ -199,8 +199,13 @@ export default function SimulationView() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Track whether auto-advance is paused (user went back)
+  const [autoAdvancePaused, setAutoAdvancePaused] = useState(false);
+
   // Phase machine
   useEffect(() => {
+    if (autoAdvancePaused) return;
+
     if (simulationPhase === 'entering') {
       playSound('move');
       const timer = setTimeout(() => setSimulationPhase('scanning'), 2000);
@@ -208,7 +213,6 @@ export default function SimulationView() {
     }
     if (simulationPhase === 'scanning') {
       playSound('scan');
-      // Pre-generate results so zones show during analyzing
       const result = generateScanResult(selectedCar, dirtLevel, isEV);
       setScanResults(result);
       const timer = setTimeout(() => setSimulationPhase('analyzing'), 2500);
@@ -230,7 +234,7 @@ export default function SimulationView() {
           if (i < steps.length - 1) setWashStep(i + 1);
         }, cumulative));
       });
-      const total = steps.reduce((s, st) => s + st.durationMs, 0);
+      const totalDur = steps.reduce((s, st) => s + st.durationMs, 0);
       timeouts.push(setTimeout(() => {
         playSound('complete');
         setShowCelebration(true);
@@ -242,10 +246,19 @@ export default function SimulationView() {
         const pts = Math.floor(price / 1000);
         addWash(pts);
         addToast({ message: t('toast_complete', lang, { pts }), type: 'success' });
-      }, total + 1000));
+      }, totalDur + 1000));
       return () => timeouts.forEach(clearTimeout);
     }
-  }, [simulationPhase]);
+  }, [simulationPhase, autoAdvancePaused]);
+
+  const handleGoBack = (targetPhase: import('@/store/appStore').SimPhase) => {
+    setAutoAdvancePaused(false);
+    setSimulationPhase(targetPhase);
+    if (targetPhase === 'idle') {
+      setScanResults(null);
+      setWashStep(0);
+    }
+  };
 
   const handleStart = () => {
     if (isEV) {
@@ -483,6 +496,14 @@ export default function SimulationView() {
               {/* ENTERING / SCANNING / ANALYZING — with dirty car image */}
               {['entering', 'scanning', 'analyzing'].includes(simulationPhase) && (
                 <motion.div key="scan-group" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-[200px]">
+                  {/* Back button */}
+                  <button
+                    onClick={() => handleGoBack('idle')}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors mb-2 flex items-center gap-1"
+                  >
+                    {t('sim_back_select', lang)}
+                  </button>
+
                   {/* Input image header */}
                   <h3 className="font-heading font-semibold mb-2 text-sm">{t('scan_input', lang)}</h3>
 
@@ -493,7 +514,6 @@ export default function SimulationView() {
                       alt="Dirty car input"
                       className="w-full h-40 object-cover"
                     />
-                    {/* Scan line animation */}
                     {simulationPhase === 'scanning' && (
                       <motion.div
                         initial={{ top: 0 }}
@@ -502,7 +522,6 @@ export default function SimulationView() {
                         className="absolute left-0 right-0 h-0.5 bg-tasco-blue shadow-[0_0_12px_rgba(0,212,255,0.8)]"
                       />
                     )}
-                    {/* Grid overlay during scan */}
                     {simulationPhase === 'scanning' && (
                       <div className="absolute inset-0 opacity-40"
                         style={{
@@ -511,7 +530,6 @@ export default function SimulationView() {
                         }}
                       />
                     )}
-                    {/* Dirt level badge */}
                     <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1 text-xs font-mono">
                       <span className={dirtLevel > 70 ? 'text-tasco-red' : dirtLevel > 50 ? 'text-tasco-yellow' : 'text-tasco-green'}>
                         {dirtLevel}%
@@ -520,7 +538,6 @@ export default function SimulationView() {
                     </div>
                   </div>
 
-                  {/* Analyzing phase — show detected zones progressively */}
                   {simulationPhase === 'analyzing' && scanResults && (
                     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
                       <div className="text-xs text-tasco-blue mb-2 flex items-center gap-2">
@@ -555,7 +572,6 @@ export default function SimulationView() {
                     </motion.div>
                   )}
 
-                  {/* Scanning phase — spinner */}
                   {simulationPhase !== 'analyzing' && (
                     <div className="flex flex-col items-center py-4">
                       <div className="w-10 h-10 border-2 border-tasco-blue border-t-transparent rounded-full animate-spin mb-3" />
@@ -570,6 +586,13 @@ export default function SimulationView() {
               {/* RESULTS — with tiered wash recommendations */}
               {simulationPhase === 'results' && scanResults && (
                 <motion.div key="results" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="overflow-y-auto">
+                  {/* Back button */}
+                  <button
+                    onClick={() => handleGoBack('idle')}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors mb-2 flex items-center gap-1"
+                  >
+                    {t('sim_back_select', lang)}
+                  </button>
                   <h3 className="font-heading font-semibold mb-2 text-sm">{t('sim_results', lang)}</h3>
 
                   {/* Input image recap (small) */}
@@ -689,6 +712,13 @@ export default function SimulationView() {
               {/* WASHING */}
               {simulationPhase === 'washing' && (
                 <motion.div key="washing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-[200px]">
+                  {/* Back button — go back to results to re-choose wash tier */}
+                  <button
+                    onClick={() => handleGoBack('results')}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors mb-2 flex items-center gap-1"
+                  >
+                    {t('sim_back_results', lang)}
+                  </button>
                   <h3 className="font-heading font-semibold mb-3">{t('sim_washing', lang)}</h3>
 
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-4">
