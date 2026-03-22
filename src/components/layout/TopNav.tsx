@@ -9,13 +9,6 @@ const TABS: { id: ViewType; labelKey: 'nav_map' | 'nav_sim' | 'nav_dash' | 'nav_
   { id: 'dashboard', labelKey: 'nav_dash', icon: '📊' },
 ];
 
-// Workflow step mapping: which views map to which step
-const WORKFLOW_STEPS = [
-  { view: 'map' as ViewType, labelVi: 'Chọn trạm', labelEn: 'Select', icon: '📍' },
-  { view: 'scanner' as ViewType, labelVi: 'Quét xe', labelEn: 'Scan', icon: '🤖' },
-  { view: 'simulation' as ViewType, labelVi: 'Rửa xe', labelEn: 'Wash', icon: '🚿' },
-  { view: 'dashboard' as ViewType, labelVi: 'Báo cáo', labelEn: 'Report', icon: '📊' },
-];
 
 export default function TopNav() {
   const activeView = useAppStore((s) => s.activeView);
@@ -23,7 +16,7 @@ export default function TopNav() {
   const lang = useAppStore((s) => s.lang);
   const setLang = useAppStore((s) => s.setLang);
 
-  const activeStepIdx = WORKFLOW_STEPS.findIndex(s => s.view === activeView);
+  
 
   return (
     <nav className="h-14 flex items-center justify-between px-6 border-b border-border bg-card/80 backdrop-blur-md relative z-50">
@@ -58,31 +51,8 @@ export default function TopNav() {
         ))}
       </div>
 
-      {/* Right side: workflow breadcrumb + lang toggle */}
+      {/* Right side: lang toggle */}
       <div className="flex items-center gap-3">
-        {/* Workflow breadcrumb — hidden on small screens */}
-        <div className="hidden lg:flex items-center gap-0.5">
-          {WORKFLOW_STEPS.map((step, i) => {
-            const isActive = step.view === activeView;
-            const isDone = i < activeStepIdx;
-            return (
-              <div key={step.view} className="flex items-center">
-                <button
-                  onClick={() => setActiveView(step.view)}
-                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-all ${
-                    isActive ? 'text-tasco-blue' : isDone ? 'text-ev-green' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <span className="text-xs">{isDone ? '✓' : step.icon}</span>
-                  <span>{lang === 'vi' ? step.labelVi : step.labelEn}</span>
-                </button>
-                {i < WORKFLOW_STEPS.length - 1 && (
-                  <span className={`text-[10px] mx-0.5 ${isDone ? 'text-ev-green' : 'text-muted-foreground'}`}>→</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
 
         <button
           onClick={() => setLang(lang === 'vi' ? 'en' : 'vi')}
