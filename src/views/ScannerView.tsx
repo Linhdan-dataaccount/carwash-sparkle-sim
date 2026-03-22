@@ -1,7 +1,145 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Environment, ContactShadows } from '@react-three/drei';
+import * as THREE from 'three';
 import { useAppStore } from '@/store/appStore';
 import { formatVND } from '@/utils/formatVND';
+
+/* ═══════════════════════════════════════════════════════════
+   3D CAR FOR LIVE SCAN DEMO
+   ═══════════════════════════════════════════════════════════ */
+function ScanCarModel({ scanning }: { scanning: boolean }) {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame((_, delta) => {
+    if (groupRef.current) {
+      // Auto-rotate 360° smoothly
+      groupRef.current.rotation.y += delta * 0.5;
+    }
+  });
+
+  const bodyColor = '#2563eb';
+  const windowColor = '#88aacc';
+
+  return (
+    <group ref={groupRef} position={[0, 0, 0]}>
+      {/* Main body */}
+      <mesh position={[0, 0.45, 0]} castShadow>
+        <boxGeometry args={[3.8, 0.9, 1.8]} />
+        <meshStandardMaterial color={bodyColor} metalness={0.7} roughness={0.25} />
+      </mesh>
+      {/* Roof / cabin */}
+      <mesh position={[0.1, 1.1, 0]} castShadow>
+        <boxGeometry args={[2.2, 0.7, 1.65]} />
+        <meshStandardMaterial color={bodyColor} metalness={0.7} roughness={0.25} />
+      </mesh>
+      {/* Windshield front */}
+      <mesh position={[-0.85, 1.0, 0]} rotation={[0, 0, 0.35]}>
+        <boxGeometry args={[0.6, 0.55, 1.5]} />
+        <meshStandardMaterial color={windowColor} transparent opacity={0.45} metalness={0.3} roughness={0.1} />
+      </mesh>
+      {/* Windshield rear */}
+      <mesh position={[1.05, 1.0, 0]} rotation={[0, 0, -0.3]}>
+        <boxGeometry args={[0.5, 0.5, 1.5]} />
+        <meshStandardMaterial color={windowColor} transparent opacity={0.45} metalness={0.3} roughness={0.1} />
+      </mesh>
+      {/* Side windows */}
+      {[-0.88, 0.88].map((z) => (
+        <mesh key={z} position={[0.1, 1.1, z]}>
+          <boxGeometry args={[1.9, 0.45, 0.05]} />
+          <meshStandardMaterial color={windowColor} transparent opacity={0.4} metalness={0.3} roughness={0.1} />
+        </mesh>
+      ))}
+      {/* Wheels */}
+      {[
+        [-1.2, 0.15, 0.95], [-1.2, 0.15, -0.95],
+        [1.2, 0.15, 0.95], [1.2, 0.15, -0.95],
+      ].map(([x, y, z], i) => (
+        <group key={i} position={[x, y, z]} rotation={[Math.PI / 2, 0, 0]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.3, 0.3, 0.22, 24]} />
+            <meshStandardMaterial color="#1a1a1a" roughness={0.8} />
+          </mesh>
+          {/* Hub cap */}
+          <mesh position={[0, z > 0 ? 0.12 : -0.12, 0]}>
+            <cylinderGeometry args={[0.18, 0.18, 0.02, 16]} />
+            <meshStandardMaterial color="#888" metalness={0.9} roughness={0.2} />
+          </mesh>
+        </group>
+      ))}
+      {/* Headlights */}
+      {[-0.6, 0.6].map((z) => (
+        <mesh key={`hl-${z}`} position={[-1.92, 0.55, z]}>
+          <boxGeometry args={[0.05, 0.18, 0.35]} />
+          <meshStandardMaterial color="#ffffff" emissive="#ffffcc" emissiveIntensity={0.8} />
+        </mesh>
+      ))}
+      {/* Tail lights */}
+      {[-0.6, 0.6].map((z) => (
+        <mesh key={`tl-${z}`} position={[1.92, 0.55, z]}>
+          <boxGeometry args={[0.05, 0.18, 0.3]} />
+          <meshStandardMaterial color="#ff2222" emissive="#ff0000" emissiveIntensity={0.6} />
+        </mesh>
+      ))}
+      {/* Front grille */}
+      <mesh position={[-1.92, 0.4, 0]}>
+        <boxGeometry args={[0.05, 0.35, 1.2]} />
+        <meshStandardMaterial color="#111" metalness={0.8} roughness={0.4} />
+      </mesh>
+      {/* Scan glow when scanning */}
+      {scanning && (
+        <pointLight position={[0, 2, 0]} color="#00d4ff" intensity={3} distance={6} />
+      )}
+    </group>
+  );
+}
+
+function ScanBeam3D({ active }: { active: boolean }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    if (meshRef.current && active) {
+      meshRef.current.position.y = 1.5 + Math.sin(clock.elapsedTime * 2) * 1.2;
+    }
+  });
+  if (!active) return null;
+  return (
+    <mesh ref={meshRef} rotation={[0, 0, 0]}>
+      <planeGeometry args={[5, 0.03]} />
+      <meshBasicMaterial color="#00d4ff" transparent opacity={0.7} side={THREE.DoubleSide} />
+    </mesh>
+  );
+}
+
+function LiveScan3DScene({ scanning }: { scanning: boolean }) {
+  return (
+    <Canvas
+      camera={{ position: [5, 3, 5], fov: 40 }}
+      style={{ width: '100%', height: '100%' }}
+      gl={{ antialias: true, alpha: true }}
+    >
+      <color attach="background" args={['#080c18']} />
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[5, 8, 5]} intensity={1.2} castShadow />
+      <directionalLight position={[-3, 4, -3]} intensity={0.4} color="#4488ff" />
+      <spotLight position={[0, 6, 0]} intensity={0.8} angle={0.6} penumbra={0.5} color="#ffffff" />
+      <Suspense fallback={null}>
+        <ScanCarModel scanning={scanning} />
+        <ScanBeam3D active={scanning} />
+        <ContactShadows position={[0, -0.15, 0]} opacity={0.5} scale={12} blur={2.5} far={4} />
+        {/* Ground grid */}
+        <gridHelper args={[20, 40, '#1a2a4a', '#0d1525']} position={[0, -0.15, 0]} />
+      </Suspense>
+      <OrbitControls
+        enablePan={false}
+        enableZoom={false}
+        autoRotate={false}
+        maxPolarAngle={Math.PI / 2.2}
+        minPolarAngle={Math.PI / 4}
+      />
+    </Canvas>
+  );
+}
 
 /* ═══════════════════════════════════════════════════════════
    MOCK DATA
@@ -269,9 +407,11 @@ export default function ScannerView() {
             {scanStage === 1 && scanMode === 'live' && (
               <motion.div key="s1a" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
                 {/* Camera viewport */}
-                <div className="relative aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800">
-                  {/* Simulated noise bg */}
-                  <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'0.4\'/%3E%3C/svg%3E")' }} />
+                <div className="relative aspect-video rounded-2xl overflow-hidden border border-gray-800">
+                  {/* 3D Car rotating scene */}
+                  <div className="absolute inset-0">
+                    <LiveScan3DScene scanning={isScanning} />
+                  </div>
 
                   {/* [A] Bounding box corners */}
                   <motion.div
