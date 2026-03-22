@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/appStore';
-import { STATIONS } from '@/data/stations';
+import { STATIONS, PARTNER_TIER_CONFIG, type PartnerTier } from '@/data/stations';
 import { VETC_USER } from '@/data/vetcUser';
 import { markerColor, makePrediction } from '@/data/mockHelpers';
 import { formatVND } from '@/utils/formatVND';
@@ -30,6 +30,18 @@ function PredictionSparkline({ data }: { data: number[] }) {
         {trend < 0 ? t('queue_clear', lang) : trend > 0 ? t('queue_busy', lang) : t('queue_stable', lang)}
       </div>
     </div>
+  );
+}
+
+function TierBadge({ tier, lang }: { tier: PartnerTier; lang: 'vi' | 'en' }) {
+  const cfg = PARTNER_TIER_CONFIG[tier];
+  return (
+    <span
+      className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
+      style={{ background: `${cfg.color}22`, color: cfg.color }}
+    >
+      {cfg.icon} {lang === 'vi' ? cfg.labelVi : cfg.labelEn}
+    </span>
   );
 }
 
@@ -63,6 +75,7 @@ function StationCard({ station, isSelected, isBest, onClick }: {
           <div className="text-xs text-muted-foreground truncate">{station.address}</div>
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
+          <TierBadge tier={station.partnerTier} lang={lang} />
           {isBest && <span className="text-[10px] bg-tasco-blue/20 text-tasco-blue px-1.5 py-0.5 rounded-full">⭐ {t('badge_best', lang)}</span>}
           {station.evCertified && <span className="text-[10px] bg-ev-green/20 text-ev-green px-1.5 py-0.5 rounded-full">⚡ EV</span>}
         </div>
@@ -81,7 +94,7 @@ function StationCard({ station, isSelected, isBest, onClick }: {
       <div className="flex items-center justify-between mt-2">
         <span className="text-xs text-muted-foreground font-mono">{formatVND(station.priceMin)} – {formatVND(station.priceMax)}</span>
         <button
-          onClick={(e) => { e.stopPropagation(); setActiveView('simulation'); }}
+          onClick={(e) => { e.stopPropagation(); setActiveView('scanner'); }}
           className="text-xs text-tasco-blue hover:text-tasco-blue/80 transition-colors"
           aria-label={t('book_btn', lang)}
         >
@@ -101,6 +114,7 @@ export default function MapView() {
 
   const [evFilter, setEvFilter] = useState(false);
   const [wifiFilter, setWifiFilter] = useState(false);
+  const [tierFilter, setTierFilter] = useState<PartnerTier | null>(null);
 
   // Queue animation
   useEffect(() => {
@@ -130,6 +144,7 @@ export default function MapView() {
     let list = [...STATIONS];
     if (evFilter) list = list.filter((s) => s.evCertified);
     if (wifiFilter) list = list.filter((s) => s.hasWifi);
+    if (tierFilter) list = list.filter((s) => s.partnerTier === tierFilter);
 
     const getQueue = (s: typeof STATIONS[0]) => {
       let q = queueOverrides[s.id] ?? s.queue;
@@ -148,10 +163,16 @@ export default function MapView() {
         list.sort((a, b) => a.priceMin - b.priceMin);
         break;
       default:
-        list.sort((a, b) => (b.rating - a.rating) + (getQueue(a) - getQueue(b)) * 0.3);
+        // Balanced: TASCO hubs first, then verified, then basic; within each tier sort by rating + queue
+        list.sort((a, b) => {
+          const tierOrder = { tasco_hub: 0, verified: 1, basic: 2 };
+          const td = tierOrder[a.partnerTier] - tierOrder[b.partnerTier];
+          if (td !== 0) return td;
+          return (b.rating - a.rating) + (getQueue(a) - getQueue(b)) * 0.3;
+        });
     }
     return list;
-  }, [mapFilter, queueOverrides, rushHourActive, evFilter, wifiFilter]);
+  }, [mapFilter, queueOverrides, rushHourActive, evFilter, wifiFilter, tierFilter]);
 
   const bestStationId = filteredStations[0]?.id;
   const selectedStation = STATIONS.find((s) => s.id === selectedStationId);
@@ -168,6 +189,12 @@ export default function MapView() {
     { id: 'nearest', labelKey: 'filter_nearest' },
     { id: 'cheapest', labelKey: 'filter_cheapest' },
   ];
+
+  const tierCounts = useMemo(() => ({
+    tasco_hub: STATIONS.filter(s => s.partnerTier === 'tasco_hub').length,
+    verified: STATIONS.filter(s => s.partnerTier === 'verified').length,
+    basic: STATIONS.filter(s => s.partnerTier === 'basic').length,
+  }), []);
 
   return (
     <div className="h-full flex flex-col">
@@ -298,6 +325,34 @@ export default function MapView() {
               <span className="text-muted-foreground">💳 {t('journey_autopay', lang)}</span>
             </div>
           </div>
+
+          {/* Partner tier filter tabs */}
+          <div className="px-3 pb-2 flex gap-1">
+            <button
+              onClick={() => setTierFilter(null)}
+              className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all ${
+                tierFilter === null ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {lang === 'vi' ? 'Tất cả' : 'All'} ({STATIONS.length})
+            </button>
+            {(['tasco_hub', 'verified', 'basic'] as PartnerTier[]).map(tier => {
+              const cfg = PARTNER_TIER_CONFIG[tier];
+              return (
+                <button
+                  key={tier}
+                  onClick={() => setTierFilter(tierFilter === tier ? null : tier)}
+                  className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all ${
+                    tierFilter === tier ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  style={tierFilter === tier ? { background: `${cfg.color}22`, color: cfg.color } : {}}
+                >
+                  {cfg.icon} {tierCounts[tier]}
+                </button>
+              );
+            })}
+          </div>
+
           <div className="px-3 pb-2 border-b border-border">
             <div className="text-sm font-heading font-semibold">{t('map_title', lang, { n: filteredStations.length })}</div>
           </div>
@@ -311,6 +366,25 @@ export default function MapView() {
                 onClick={() => setSelectedStation(station.id)}
               />
             ))}
+          </div>
+
+          {/* Partner network footer */}
+          <div className="px-3 py-2.5 border-t border-border bg-muted/20">
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] text-muted-foreground">
+                {lang === 'vi' ? 'Mạng lưới TASCO' : 'TASCO Network'}: {STATIONS.length} {lang === 'vi' ? 'trạm' : 'stations'}
+              </div>
+              <div className="flex gap-2">
+                {(['tasco_hub', 'verified', 'basic'] as PartnerTier[]).map(tier => {
+                  const cfg = PARTNER_TIER_CONFIG[tier];
+                  return (
+                    <span key={tier} className="text-[10px] flex items-center gap-0.5" style={{ color: cfg.color }}>
+                      {cfg.icon} {tierCounts[tier]}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -327,19 +401,23 @@ export default function MapView() {
             {STATIONS.map((station) => {
               let queue = queueOverrides[station.id] ?? station.queue;
               if (rushHourActive) queue = Math.min(Math.ceil(queue * 2.5), station.slots * 3);
-              const color = markerColor(queue, station.slots);
+              const tierCfg = PARTNER_TIER_CONFIG[station.partnerTier];
+              const qColor = markerColor(queue, station.slots);
               const isBest = station.id === bestStationId;
               const isSelected = station.id === selectedStationId;
+
+              // Use tier color for fill, queue color for border
+              const fillColor = station.partnerTier === 'tasco_hub' ? tierCfg.markerColor : station.partnerTier === 'verified' ? tierCfg.markerColor : '#6B7280';
 
               return (
                 <CircleMarker
                   key={station.id}
                   center={[station.lat, station.lng]}
-                  radius={isSelected ? 14 : isBest ? 12 : 10}
+                  radius={isSelected ? 14 : isBest ? 12 : station.partnerTier === 'basic' ? 8 : 10}
                   pathOptions={{
-                    color: isBest ? '#00d4ff' : color,
-                    fillColor: color,
-                    fillOpacity: 0.8,
+                    color: isBest ? '#00d4ff' : qColor,
+                    fillColor: fillColor,
+                    fillOpacity: station.partnerTier === 'basic' ? 0.5 : 0.8,
                     weight: isBest ? 3 : isSelected ? 2 : 1,
                   }}
                   eventHandlers={{ click: () => setSelectedStation(station.id) }}
@@ -348,6 +426,11 @@ export default function MapView() {
                     <div className="text-xs p-1" style={{ color: '#111', minWidth: 220 }}>
                       <div className="font-bold text-sm mb-1">{station.name}</div>
                       <div className="mb-1">{station.address}</div>
+                      <div className="flex gap-2 mb-1.5">
+                        <span style={{ background: `${tierCfg.color}22`, color: tierCfg.color, padding: '1px 6px', borderRadius: 8, fontSize: 10, fontWeight: 600 }}>
+                          {tierCfg.icon} {lang === 'vi' ? tierCfg.labelVi : tierCfg.labelEn}
+                        </span>
+                      </div>
                       <div className="flex gap-2 mb-1">
                         <span>{t('wait_est', lang)}: ~{Math.ceil((queue / Math.max(station.slots, 1)) * station.avgMins)} {t('mins_unit', lang)}</span>
                         <span>⭐ {station.rating}</span>
@@ -358,7 +441,7 @@ export default function MapView() {
                       </div>
                       <div className="mb-2">{formatVND(station.priceMin)} – {formatVND(station.priceMax)}</div>
                       <button
-                        onClick={(e) => { e.stopPropagation(); setActiveView('simulation'); }}
+                        onClick={(e) => { e.stopPropagation(); setActiveView('scanner'); }}
                         style={{
                           width: '100%', padding: '6px 0', borderRadius: 8,
                           background: '#0ea5e9', color: '#fff', border: 'none',
@@ -373,6 +456,21 @@ export default function MapView() {
               );
             })}
           </MapContainer>
+
+          {/* Map legend */}
+          <div className="absolute bottom-3 left-3 z-[1000] glass px-3 py-2 rounded-xl">
+            <div className="space-y-1">
+              {(['tasco_hub', 'verified', 'basic'] as PartnerTier[]).map(tier => {
+                const cfg = PARTNER_TIER_CONFIG[tier];
+                return (
+                  <div key={tier} className="flex items-center gap-2 text-[10px]">
+                    <div className="w-3 h-3 rounded-full" style={{ background: cfg.markerColor, opacity: tier === 'basic' ? 0.5 : 0.8 }} />
+                    <span className="text-foreground">{lang === 'vi' ? cfg.labelVi : cfg.labelEn}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
           {/* VETC chip when bar dismissed */}
           {!vetcBarVisible && (
