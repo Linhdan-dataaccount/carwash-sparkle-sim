@@ -6,7 +6,7 @@ import { CHEMICALS } from '@/data/inventory';
 import { REVIEWS } from '@/data/reviews';
 import { generateOrder } from '@/data/liveOrders';
 import { KPI_DATA, REVENUE_DATA, QUALITY_DATA, VETC_TRANSACTIONS } from '@/data/mockHelpers';
-import { ENV_IMPACT } from '@/data/stations';
+import { STATIONS, PARTNER_TIER_CONFIG, ENV_IMPACT, type PartnerTier } from '@/data/stations';
 import { formatVND } from '@/utils/formatVND';
 import { t } from '@/i18n/translations';
 import { ImpactPanel } from '@/components/dashboard/ImpactPanel';
@@ -82,6 +82,7 @@ const SECTION_KEYS: { id: ExtDashSection; labelKey: keyof typeof import('@/i18n/
   { id: 'inventory', labelKey: 'dash_inventory', icon: '🧪' },
   { id: 'quality', labelKey: 'dash_quality', icon: '🏅' },
   { id: 'vetc', labelKey: 'dash_vetc', icon: '💳' },
+  { id: 'partners' as any, labelKey: 'dash_partners', icon: '🤝' },
   { id: 'impact', labelKey: 'dash_impact', icon: '🌱' },
 ];
 
@@ -542,6 +543,105 @@ export default function DashboardView() {
                       </motion.div>
                     ))}
                   </AnimatePresence>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* PARTNERS */}
+          {activeSection === ('partners' as any) && (
+            <motion.div key="partners" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+              {/* Network Overview */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {(['tasco_hub', 'verified', 'basic'] as PartnerTier[]).map((tier, i) => {
+                  const cfg = PARTNER_TIER_CONFIG[tier];
+                  const count = STATIONS.filter(s => s.partnerTier === tier).length;
+                  const avgRating = (STATIONS.filter(s => s.partnerTier === tier).reduce((s, st) => s + st.rating, 0) / count).toFixed(1);
+                  return (
+                    <motion.div
+                      key={tier}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08 }}
+                      className="glass p-4"
+                      style={{ borderLeft: `3px solid ${cfg.color}` }}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg">{cfg.icon}</span>
+                        <span className="text-sm font-heading font-semibold">{lang === 'vi' ? cfg.labelVi : cfg.labelEn}</span>
+                      </div>
+                      <div className="text-2xl font-heading font-bold font-mono" style={{ color: cfg.color }}>{count}</div>
+                      <div className="text-xs text-muted-foreground mt-1">{lang === 'vi' ? 'Đánh giá TB' : 'Avg rating'}: ⭐ {avgRating}</div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              {/* Partner List */}
+              <div className="glass p-4">
+                <h3 className="text-sm font-heading font-semibold mb-3">{t('partner_network', lang)}</h3>
+                <div className="space-y-1">
+                  <div className="grid grid-cols-6 gap-2 text-xs text-muted-foreground px-2 pb-2 border-b border-border">
+                    <span>{t('col_name', lang)}</span><span>{lang === 'vi' ? 'Loại' : 'Tier'}</span><span>⭐</span><span>{lang === 'vi' ? 'Dịch vụ' : 'Services'}</span><span>{lang === 'vi' ? 'Xe/ngày' : 'Cars/day'}</span><span>SmartScan</span>
+                  </div>
+                  {STATIONS.map((station, i) => {
+                    const cfg = PARTNER_TIER_CONFIG[station.partnerTier];
+                    return (
+                      <motion.div
+                        key={station.id}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                        className="grid grid-cols-6 gap-2 text-xs px-2 py-2 rounded-lg hover:bg-muted/20 transition-colors items-center"
+                      >
+                        <span className="truncate font-medium">{station.name.replace('Tasco @ ', '').replace('Tasco ', '')}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold w-fit" style={{ background: `${cfg.color}22`, color: cfg.color }}>
+                          {cfg.icon} {lang === 'vi' ? cfg.labelVi.split(' ').pop() : cfg.labelEn.split(' ').pop()}
+                        </span>
+                        <span>{station.rating}</span>
+                        <span className="text-muted-foreground">{station.services.length}</span>
+                        <span className="font-mono">{Math.round(station.reviewCount / 7)}</span>
+                        <span>{station.partnerTier !== 'basic' ? <span className="text-ev-green">✓</span> : <span className="text-muted-foreground">—</span>}</span>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Upgrade Benefits */}
+              <div className="glass p-4">
+                <h3 className="text-sm font-heading font-semibold mb-3">{t('partner_benefits', lang)}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { icon: '📈', labelKey: 'partner_visibility' as const, stat: '3.2×' },
+                    { icon: '📅', labelKey: 'partner_bookings' as const, stat: '+47%' },
+                    { icon: '🛡️', labelKey: 'partner_trust' as const, stat: '98%' },
+                    { icon: '🤖', labelKey: 'partner_smartscan' as const, stat: lang === 'vi' ? 'Miễn phí' : 'Free' },
+                  ].map((benefit, i) => (
+                    <motion.div
+                      key={benefit.labelKey}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 + i * 0.06 }}
+                      className="flex items-center gap-3 p-3 rounded-xl border border-border"
+                    >
+                      <span className="text-2xl">{benefit.icon}</span>
+                      <div className="flex-1">
+                        <div className="text-xs font-medium">{t(benefit.labelKey, lang)}</div>
+                      </div>
+                      <span className="font-mono font-bold text-tasco-blue text-sm">{benefit.stat}</span>
+                    </motion.div>
+                  ))}
+                </div>
+                <div className="mt-3 p-3 rounded-xl bg-tasco-blue/5 border border-tasco-blue/20 text-center">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {lang === 'vi'
+                      ? 'Đối tác Basic có thể nâng cấp lên Verified để sử dụng SmartScan AI và tăng thứ hạng trên bản đồ.'
+                      : 'Basic Partners can upgrade to Verified to access SmartScan AI and boost their map ranking.'}
+                  </p>
+                  <button className="px-4 py-2 rounded-lg bg-tasco-blue text-background text-xs font-semibold hover:brightness-110 transition-all active:scale-[0.97]">
+                    {t('partner_upgrade', lang)}
+                  </button>
                 </div>
               </div>
             </motion.div>

@@ -260,6 +260,32 @@ export const T = {
 
   // ── AI Scanner tab ──
   nav_scanner:      { vi: 'Máy quét AI',          en: 'AI Scanner'         },
+
+  // ── Partner tiers ──
+  tier_tasco_hub:   { vi: 'TASCO Hub',              en: 'TASCO Hub'          },
+  tier_verified:    { vi: 'Đối tác xác minh',       en: 'Verified Partner'   },
+  tier_basic:       { vi: 'Đối tác cơ bản',         en: 'Basic Partner'      },
+  partner_network:  { vi: 'Mạng lưới đối tác',      en: 'Partner Network'    },
+  partner_all:      { vi: 'Tất cả',                 en: 'All'                },
+  partner_onboard:  { vi: 'Tham gia mạng lưới',     en: 'Join Network'       },
+  partner_upgrade:  { vi: 'Nâng cấp lên Verified',  en: 'Upgrade to Verified'},
+  partner_benefits: { vi: 'Lợi ích nâng cấp',       en: 'Upgrade Benefits'   },
+  partner_visibility:{ vi: 'Hiển thị cao hơn trên bản đồ', en: 'Higher map visibility' },
+  partner_bookings: { vi: 'Nhiều lượt đặt lịch hơn', en: 'More bookings'     },
+  partner_trust:    { vi: 'Huy hiệu tin cậy TASCO', en: 'TASCO trust badge'  },
+  partner_smartscan:{ vi: 'Truy cập SmartScan AI',  en: 'SmartScan AI access'},
+  dash_partners:    { vi: 'Đối tác',               en: 'Partners'           },
+
+  // ── Workflow breadcrumb ──
+  wf_select:        { vi: 'Chọn trạm',             en: 'Select Station'     },
+  wf_scan:          { vi: 'Quét xe',               en: 'Scan Car'           },
+  wf_wash:          { vi: 'Rửa xe',               en: 'Wash'               },
+  wf_report:        { vi: 'Báo cáo',              en: 'Report'             },
+
+  // ── Contextual nav ──
+  ctx_proceed_scan: { vi: '→ Tiến hành quét xe',   en: '→ Proceed to Scan'  },
+  ctx_proceed_wash: { vi: '→ Tiến hành rửa xe',   en: '→ Proceed to Wash'  },
+  ctx_view_report:  { vi: '→ Xem báo cáo',        en: '→ View Report'      },
 } as const;
 
 export function t(
