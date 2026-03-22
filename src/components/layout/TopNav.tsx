@@ -51,31 +51,8 @@ export default function TopNav() {
         ))}
       </div>
 
-      {/* Right side: workflow breadcrumb + lang toggle */}
+      {/* Right side: lang toggle */}
       <div className="flex items-center gap-3">
-        {/* Workflow breadcrumb — hidden on small screens */}
-        <div className="hidden lg:flex items-center gap-0.5">
-          {WORKFLOW_STEPS.map((step, i) => {
-            const isActive = step.view === activeView;
-            const isDone = i < activeStepIdx;
-            return (
-              <div key={step.view} className="flex items-center">
-                <button
-                  onClick={() => setActiveView(step.view)}
-                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-all ${
-                    isActive ? 'text-tasco-blue' : isDone ? 'text-ev-green' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <span className="text-xs">{isDone ? '✓' : step.icon}</span>
-                  <span>{lang === 'vi' ? step.labelVi : step.labelEn}</span>
-                </button>
-                {i < WORKFLOW_STEPS.length - 1 && (
-                  <span className={`text-[10px] mx-0.5 ${isDone ? 'text-ev-green' : 'text-muted-foreground'}`}>→</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
 
         <button
           onClick={() => setLang(lang === 'vi' ? 'en' : 'vi')}
